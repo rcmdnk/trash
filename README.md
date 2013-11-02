@@ -35,7 +35,7 @@ It is stressful because we are used to benefit from the trash box on a GUI syste
     export MAXTRASHSIZE=`echo $MAXTRASHBOXSIZE "*" 0.1|bc -l|cut -d. -f1`
         # Trashes larger than MAXTRASHBOXSIZE will be removed by 'rm' directly
 
-# Ref
+# References
 
 * [rm -rfのプロテクト、コマンドラインでのゴミ箱](http://rcmdnk.github.io/blog/2013/04/23/computer-bash-linux-mac/)
 
