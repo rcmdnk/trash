@@ -39,3 +39,7 @@ It is stressful because we are used to benefit from the trash box on a GUI syste
 
 * [rm -rfのプロテクト、コマンドラインでのゴミ箱](http://rcmdnk.github.io/blog/2013/04/23/computer-bash-linux-mac/)
 
+
+
+[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/rcmdnk/trash/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
+
