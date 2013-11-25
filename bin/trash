@@ -1,21 +1,28 @@
 #!/bin/bash
 
-# default variables
-def_rdir=0
-def_force=1
-def_confirm=0
-def_tbox="~/.Trash"
-def_tlist="~/.trashlist"
+# Default variables
+rdir=0
+force=1
+confirm=0
+tbox=${TRASHBOX:-~/.Trash}
+tlist=${TRASHLIST:-~/.trashlist}
+maxboxsize=${MAXTRASHBOXSIZE:-1024}
+maxsize=${MAXTRASHSIZE:-102}
+clean=0
+clean_full=0
+list=0
+back=0
+verbose=0
 
 # Help
 HELP="
 Usage: trash [-rficClbv] [-t <trash_box>] <file/directory>
 
 Arguments:
-   -r              Remove directory (default: $def_rdir)
-   -f              Remove w/o confirmation (default: $def_force)
-   -i              Remove w/ confirmation (default: $def_confirm)
-   -t              Use given trash box instead of ${TRASHBOX:-$def_tbox}
+   -r              Remove directory (default: $rdir)
+   -f              Remove w/o confirmation (default: $force)
+   -i              Remove w/ confirmation (default: $confirm)
+   -t              Use given trash box instead of ${tbox}
    -c              Clean up trash box (make it less than MAXTRASHBOXSIZE)
    -C              Clean up trash box (make it empty)
    -l              List up deleted files/directories in the trash box
@@ -24,7 +31,7 @@ Arguments:
    -h              Print this HELP and exit
 
 To use trash, please specify following variables
-in .bashrc or your setting file like:
+in .bashrc or your setting file like (these rh values are default):
 
 export TRASHLIST=~/.trashlist # Where trash list is written
 export TRASHBOX=~/.Trash # Where trash will be moved in
@@ -34,18 +41,6 @@ export MAXTRASHBOXSIZE=1024 # Max trash box size in MB
 export MAXTRASHSIZE=\`echo \$MAXTRASHBOXSIZE \"*\" 0.1|bc -l|cut -d. -f1\`
     # Trashes larger than MAXTRASHBOXSIZE will be removed by 'rm' directly
 "
-
-# Initialize variables
-rdir=$def_rdir
-force=$def_rdir
-confirm=$def_rdir
-tbox=""
-tlist=$def_tlist
-clean=0
-clean_full=0
-list=0
-back=0
-verbose=0
 
 # Get option
 while getopts rfit:cClbvh OPT;do
@@ -65,15 +60,6 @@ while getopts rfit:cClbvh OPT;do
 done
 shift $(($OPTIND - 1))
 
-# Set trash box/list
-tbox="${tbox:-$TRASHBOX}"
-if [ ! "$tbox" ];then
-  echo "please set TRASHBOX"
-  exit 1
-fi
-tlist="${TRASHLIST:-$tlist}"
-touch $tlist
-
 # Use more one depth directory to distinguish from other trash
 # (especially for Mac's ~/.Trash case)
 mytbox="$tbox/my_trash_box"
@@ -82,14 +68,16 @@ mytbox="$tbox/my_trash_box"
 if [ $clean_full -eq 1 ];then
   rm -rf $mytbox
   rm -rf $tlist
+  touch $tlist
   exit 0
 elif [ $clean -eq 1 ];then
   if [ ! -d ${mytbox} ];then
     exit 0
   fi
+  touch $tlist
   while [ 1 ];do
     trash_box_size=`du -ms ${mytbox} |awk '{print $1}'`
-    if [ ${trash_box_size} -gt ${MAXTRASHBOXSIZE} ];then
+    if [ ${trash_box_size} -gt ${maxboxsize} ];then
       delete_dir=`ls -tr ${TRASHBOX} | head -1`
       rm -rf ${mytbox}/${delete_dir}
       sed -i.bak "\!${mybox}/${delete_dir}!d" $tlist
@@ -118,6 +106,7 @@ if [ $list -eq 1 ] || [ $back -eq 1 ];then
   fi
 
   # List up trashes
+  touch $tlist
   cat -n $tlist|$revlines|cut -d, -f1-$cutn|awk '{printf("%3d %s\n",$1,$2)}'
 
   if [ $back -ne 1 ];then
@@ -197,8 +186,8 @@ while [ "$#" -gt 0 ];do
     continue
   fi
   trash_size=`du -ms "${1}" |awk '{print $1}'`
-  if [ ${trash_size} -gt ${MAXTRASHSIZE} ];then
-    echo $1 is larger than $MAXTRASHSIZE MB, then I delete it directly
+  if [ ${trash_size} -gt ${maxsize} ];then
+    echo $1 is larger than $maxsize MB, then I delete it directly
     rm $rmflag $1
     shift
     continue
