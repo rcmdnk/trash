@@ -114,7 +114,7 @@ if [ $list -eq 1 ] || [ $back -eq 1 ];then
   fi
 
   # Choose from STDIN
-  ntrashes=`wc $tlist|awk '{print $1}'`
+  ntrashes=`wc -l $tlist`
   echo -n "choose trash number: "
   read nth
 
