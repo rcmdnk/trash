@@ -88,9 +88,9 @@ mytbox="$tbox/my_trash_box"
 
 # Clean up the trash box
 if [ $clean_full -eq 1 ];then
-  rm -rf $mytbox
-  rm -rf $tlist
-  touch $tlist
+  rm -rf "$mytbox"
+  rm -rf "$tlist"
+  touch "$tlist"
   exit 0
 elif [ $clean -eq 1 ];then
   if [ ! -d ${mytbox} ];then
@@ -101,9 +101,9 @@ elif [ $clean -eq 1 ];then
     trash_box_size=`du -ms ${mytbox} |awk '{print $1}'`
     if [ ${trash_box_size} -gt ${maxboxsize} ];then
       delete_dir=`ls -tr ${TRASHBOX} | head -1`
-      rm -rf ${mytbox}/${delete_dir}
-      sed -i.bak "\!${mybox}/${delete_dir}!d" $tlist
-      rm -f $tlist.bak
+      rm -rf "${mytbox}/${delete_dir}"
+      sed -i.bak "\!${mybox}/${delete_dir}!d" "$tlist"
+      rm -f "$tlist.bak"
     else
       exit 0
     fi
@@ -155,8 +155,8 @@ if [ $list -eq 1 ] || [ $back -eq 1 ];then
     exit 1
   elif [ ! -e "$trash_name" ];then
     echo "$trash_name_short doesn't exist, remove from the list"
-    sed -i.bak "\!${trash_name_short}\$!d" $tlist
-    rm -f $tlist.bak
+    sed -i.bak "\!${trash_name_short}\$!d" "$tlist"
+    rm -f "$tlist.bak"
     exit 1
   fi
   if [ $confirm -eq 1 ];then
@@ -170,8 +170,8 @@ if [ $list -eq 1 ] || [ $back -eq 1 ];then
   fi
   mv "$trash_name" "$origin_name"
   echo ${origin_name_short} was restored from  ${trash_name_short}
-  sed -i.bak "\!${trash_name_short}\$!d" $tlist
-  rm -f $tlist.bak
+  sed -i.bak "\!${trash_name_short}\$!d" "$tlist"
+  rm -f "$tlist.bak"
   exit 0
 fi
 
@@ -193,8 +193,8 @@ fi
 
 # Set today's trash box
 tboxtoday="$mytbox/`date +%Y%m%d`"
-if [ ! -d $tboxtoday ];then
-  mkdir -p $tboxtoday
+if [ ! -d "$tboxtoday" ];then
+  mkdir -p "$tboxtoday"
 fi
 
 # Iterate on arguments
@@ -210,7 +210,7 @@ while [ "$#" -gt 0 ];do
   trash_size=`du -ms "${1}" |awk '{print $1}'`
   if [ ${trash_size} -gt ${maxsize} ];then
     echo $1 is larger than $maxsize MB, then I delete it directly
-    rm $rmflag $1
+    rm $rmflag "$1"
     shift
     continue
   fi
@@ -248,9 +248,9 @@ while [ "$#" -gt 0 ];do
   origin_name_short="${origin_name/#$HOME/~}"
   trash_name_short="${trash_name/#$HOME/~}"
   echo $origin_name_short was moved to $trash_name_short
-  mv $tlist $tlist.bak
+  mv "$tlist" "$tlist.bak"
   echo "`date +%Y%m%d-%H-%M-%S`,$origin_name_short,$trash_name_short" > $tlist
-  cat $tlist.bak >> $tlist
-  rm -f $tlist.bak
+  cat "$tlist.bak" >> "$tlist"
+  rm -f "$tlist.bak"
   shift
 done
