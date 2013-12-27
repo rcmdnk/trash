@@ -136,7 +136,7 @@ if [ $list -eq 1 ] || [ $back -eq 1 ];then
   fi
 
   # Choose from STDIN
-  ntrashes=`wc -l $tlist`
+  ntrashes=$(cat $tlist|wc -l|xargs echo)
   echo -n "choose trash number: "
   read nth
 
