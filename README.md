@@ -75,10 +75,10 @@ Or, simply download scripts and set where you like.
      k     : n-up   (if n is not defined, 1 up)
      ^U    : Half page up
      ^B    : Page up
-     d     : Delete
-     s     : Show details
      gg    : Go to top    (if n is defined, go to n)
      G     : Go to bottom (if n is defined, go to n)
+     d     : Delete
+     s     : Show details
      Enter : Select to bring back to the original place, and quit
      h     : Select to copy it to current directory, and quit
      q     : Quit
@@ -92,10 +92,17 @@ Or, simply download scripts and set where you like.
         # Trashes larger than MAXTRASHBOXSIZE will be removed by 'rm' directly
     "
 
+# Tips
+
+Following alias is useful to use trash:
+
+    alias del="trash"
+
 # References
 
 * [rm -rfのプロテクト、コマンドラインでのゴミ箱](http://rcmdnk.github.io/blog/2013/04/23/computer-bash-linux-mac/)
 
+* [コマンドラインで使うゴミ箱コマンド](http://rcmdnk.github.io/blog/2014/01/12/computer-bash/)
 
 
 [![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/rcmdnk/trash/trend.png)](https://bitdeli.com/free "Bitdeli Badge")

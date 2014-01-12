@@ -66,12 +66,12 @@ At restore mode, you can use following keys (based on vim move):
  k     : n-up   (if n is not defined, 1 up)
  ^U    : Half page up
  ^B    : Page up
- d     : Delete
- s     : Show details
  gg    : Go to top    (if n is defined, go to n)
  G     : Go to bottom (if n is defined, go to n)
+ d     : Delete
+ s     : Show details
  Enter : Select to bring back to the original place, and quit
- h     : Select to copy it to current directory, and quit
+ h     : Select to copy it to current directory (here), and quit
  q     : Quit
 
 export TRASHLIST=~/.trashlist # Where trash list is written
@@ -96,9 +96,25 @@ while getopts rfit:cClbv:h OPT;do
     "b" ) back=1 ;;
     "v" ) verbose=$OPTARG ;;
     "h" ) echo "$HELP" 1>&2;exit 0;;
-    * ) echo "$HELP" 1>&2;exit 1;;
+    * ) echo "$OPT is not expected."
+        echo "$HELP" 1>&2;exit 1;;
   esac
 done
+
+# nth show helper function
+function nth () {
+  if [ $1 -eq 1 ];then
+    echo 1st
+  elif [ $1 -eq 2 ];then
+    echo 2nd
+  elif [ $1 -eq 3 ];then
+    echo 3rd
+  else
+    echo ${1}th
+  fi
+}
+
+
 shift $(($OPTIND - 1))
 
 # Use more one depth directory to distinguish from other trash
@@ -115,6 +131,7 @@ elif [ $clean -eq 1 ];then
   if [ ! -d ${mytbox} ];then
     exit 0
   fi
+  # Clean up trash box
   touch "$tlist"
   while [ 1 ];do
     trash_box_size=`du -ms ${mytbox} |awk '{print $1}'`
@@ -124,9 +141,23 @@ elif [ $clean -eq 1 ];then
       sed -i.bak "\!${mybox}/${delete_dir}!d" "$tlist"
       rm -f "$tlist.bak"
     else
-      exit 0
+      break
     fi
   done
+  # Clean up trash list
+  while read line;do
+    orig_ifs=$IFS
+    IFS=","
+    tinfo=(${trash_list[$1]})
+    IFS=$orig_ifs
+    trash_name_short=${tinfo[2]}
+    trash_name=$(sh -c "echo $trash_name_short") # Expand ~
+    if [ ! -e "$trash_name" ];then
+      sed -i.bak "\!${trash_name_short}\$!d" "$tlist"
+      rm -f "$tlist.bak"
+    fi
+  done < "$tlist"
+  exit 0
 fi
 
 # List up deleted files/directories
@@ -246,7 +277,7 @@ if [ $back -eq 1 ];then
     if [ "$origin_name" = "" ] || [ "$trash_name" = "" ];then
       clear
       echo "$tlist might be corrupted"
-      echo "Check $(($1+1))th trash information in $tlist"
+      echo "Check $(nth $(($1+1))) trash information in $tlist"
       sleep 3
       exit 1
     elif [ ! -e "$trash_name" ];then
@@ -337,9 +368,6 @@ if [ $back -eq 1 ];then
         elif [ $c = $'\002' ];then
           n_move=$((max_show))
         elif [ $n_move -eq 0 ];then
-          n_move=1
-        fi
-        if [ $n_move -eq 0 ];then
           n_move=1
         fi
         all=0
@@ -454,7 +482,7 @@ if [ $back -eq 1 ];then
         trash_name_short=${tinfo[2]}
 
         clear
-        echo $((n+1))th trash:
+        echo $(nth $((n+1))) trash:
         echo Original file    : $origin_name_short
         echo File in trash box: $trash_name_short
         sleep 3
@@ -490,7 +518,7 @@ if [ $back -eq 1 ];then
   if [ "$origin_name" = "" ] || [ "$trash_name" = "" ];then
     clear
     echo "$tlist might be corrupted"
-    echo "Check $(($1+1))th trash information in $tlist"
+    echo "Check $(nth $(($1+1))) trash information in $tlist"
     sleep 3
     exit 1
   elif [ ! -e "$trash_name" ];then
@@ -533,6 +561,7 @@ fi
 
 # Check arguments
 if [ "$#" -lt 1 ];then
+  echo "No file/directory is given." 1>&2;
   echo "$HELP" 1>&2;
   exit 1
 fi
