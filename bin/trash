@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/usr/bin/env bash
 
 #The MIT License (MIT) {{{
 #
@@ -153,7 +153,6 @@ elif [ $clean -eq 1 ];then
     trash_name_short=${tinfo[2]}
     trash_name=$(sh -c "echo $trash_name_short") # Expand ~
     if [ ! -e "$trash_name" ];then
-      echo $trash_name
       sed -i.bak "\!${trash_name_short}\$!d" "$tlist"
       rm -f "$tlist.bak"
     fi
@@ -363,7 +362,7 @@ if [ $back -eq 1 ];then
         n_move=0
         continue
         ;;
-      "k"|$'\x15'|$'\x02' ) # j/^U/^B
+      "k"|$'\x15'|$'\x02' ) # k/^U/^B
         if [ $c = $'\x15' ];then
           n_move=$((max_show/2))
         elif [ $c = $'\x02' ];then
@@ -448,10 +447,6 @@ if [ $back -eq 1 ];then
         printall $n_offset $n
         n_move=0
         continue
-        ;;
-      $'\04' ) # ^D
-        ;;
-      $'\02' ) # ^B
         ;;
       "d" )
         # Delete Trash
