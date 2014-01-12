@@ -333,10 +333,10 @@ if [ $back -eq 1 ];then
   while : ;do
     read -s -n 1 c
     case $c in
-      "j"|$'\004'|$'\006' ) # j/^D/^F
-        if [ $c = $'\004' ];then
+      "j"|$'\x04'|$'\x06' ) # j/^D/^F
+        if [ $c = $'\x04' ];then
           n_move=$((max_show/2))
-        elif [ $c = $'\006' ];then
+        elif [ $c = $'\x06' ];then
           n_move=$((max_show))
         elif [ $n_move -eq 0 ];then
           n_move=1
@@ -362,10 +362,10 @@ if [ $back -eq 1 ];then
         n_move=0
         continue
         ;;
-      "k"|$'\x15'|$'\002' ) # j/^U/^B
+      "k"|$'\x15'|$'\x02' ) # j/^U/^B
         if [ $c = $'\x15' ];then
           n_move=$((max_show/2))
-        elif [ $c = $'\002' ];then
+        elif [ $c = $'\x02' ];then
           n_move=$((max_show))
         elif [ $n_move -eq 0 ];then
           n_move=1
@@ -489,7 +489,7 @@ if [ $back -eq 1 ];then
 
         printall
         ;;
-      "q" ) exit 0;;
+      "q"|$'\x1b' ) exit 0;;
       ""  ) break;;
       "h" ) here=1;break;;
       [0-9])
