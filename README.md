@@ -45,30 +45,52 @@ If you want to install other directory, do like:
 Or, simply download scripts and set where you like.
 # Usage
 
-    trash [-rficClbv] [-t <trash_box>] <file/directory>
+    # Help
+    HELP="
+    Usage: trash [-rficClbv] [-v <verbose level>] [-t <trash_box>] <file/directory>
     
     Arguments:
-       -r              Remove directory (default: 0)
-       -f              Remove w/o confirmation (default: 1)
-       -i              Remove w/ confirmation (default: 0)
-       -t              Use given trash box instead of ~/.Trash
+       -r              Remove directory (default: $rdir)
+       -f              Remove w/o confirmation (default: $force)
+       -i              Remove w/ confirmation (default: $confirm)
+       -t <trash_box>  Use given trash box instead of $tbox
        -c              Clean up trash box (make it less than MAXTRASHBOXSIZE)
        -C              Clean up trash box (make it empty)
        -l              List up deleted files/directories in the trash box
        -b              Restore (turn Back) the file from the trash box
-       -v              List up files/directories in trash box, too
+       -v <level>      Verbose level for list view
+                       0 : Only original location (default).
+                       1 : With Delete date-time (yyyymdd-hh:mm).
+                       2 : With Current location (in the trash box).
        -h              Print this HELP and exit
     
     To use trash, please specify following variables
-    in .bashrc or your setting file like:
+    in .bashrc or your setting file like (these rh values are default):
+    
+    At restore mode, you can use following keys (based on vim move):
+     <n>   : (any numb), set n for move
+     j     : n-down (if n is not defined, 1 down)
+     ^D    : Half page down
+     ^F    : Page down
+     k     : n-up   (if n is not defined, 1 up)
+     ^U    : Half page up
+     ^B    : Page up
+     d     : Delete
+     s     : Show details
+     gg    : Go to top    (if n is defined, go to n)
+     G     : Go to bottom (if n is defined, go to n)
+     Enter : Select to bring back to the original place, and quit
+     h     : Select to copy it to current directory, and quit
+     q     : Quit
     
     export TRASHLIST=~/.trashlist # Where trash list is written
     export TRASHBOX=~/.Trash # Where trash will be moved in
                              # (.Trash is Mac's trash box)
     export MAXTRASHBOXSIZE=1024 # Max trash box size in MB
                                 # Used for clean up
-    export MAXTRASHSIZE=`echo $MAXTRASHBOXSIZE "*" 0.1|bc -l|cut -d. -f1`
+    export MAXTRASHSIZE=\`echo \$MAXTRASHBOXSIZE \"*\" 0.1|bc -l|cut -d. -f1\`
         # Trashes larger than MAXTRASHBOXSIZE will be removed by 'rm' directly
+    "
 
 # References
 
