@@ -148,11 +148,12 @@ elif [ $clean -eq 1 ];then
   while read line;do
     orig_ifs=$IFS
     IFS=","
-    tinfo=(${trash_list[$1]})
+    tinfo=(${line})
     IFS=$orig_ifs
     trash_name_short=${tinfo[2]}
     trash_name=$(sh -c "echo $trash_name_short") # Expand ~
     if [ ! -e "$trash_name" ];then
+      echo $trash_name
       sed -i.bak "\!${trash_name_short}\$!d" "$tlist"
       rm -f "$tlist.bak"
     fi

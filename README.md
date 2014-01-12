@@ -94,9 +94,31 @@ Or, simply download scripts and set where you like.
 
 # Tips
 
+## Alias
+
 Following alias is useful to use trash:
 
-    alias del="trash"
+    alias del="trash -r"
+
+## Clean up
+
+You may be want to clean up trash box regularly to keep the box not too much.
+
+To clean up regularly, first please set `MAXTRASHBOXSIZE` as described
+in above help.
+
+Then, `trash -c` will clean up the trash box until it becomes less than `MAXTRASHSIZE`.
+
+You can set it as a cron job like:
+
+    0 1 * * * /path/to/trash -c
+
+to execute every night (1am, 00min).
+    
+
+In addition, you can empty your trash box for trash by
+
+    $ trash -C
 
 # References
 
