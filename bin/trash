@@ -333,7 +333,7 @@ if [ $back -eq 1 ];then
   while : ;do
     read -s -n 1 c
     case $c in
-      "j"|$'\x04'|$'\x06' ) # j/^D/^F
+      j|$'\x04'|$'\x06' ) # j/^D/^F
         if [ $c = $'\x04' ];then
           n_move=$((max_show/2))
         elif [ $c = $'\x06' ];then
@@ -362,7 +362,7 @@ if [ $back -eq 1 ];then
         n_move=0
         continue
         ;;
-      "k"|$'\x15'|$'\x02' ) # k/^U/^B
+      k|$'\x15'|$'\x02' ) # k/^U/^B
         if [ $c = $'\x15' ];then
           n_move=$((max_show/2))
         elif [ $c = $'\x02' ];then
@@ -391,7 +391,7 @@ if [ $back -eq 1 ];then
         n_move=0
         continue
         ;;
-      "g" )
+      g )
         if [ $g -eq 0 ];then
           g=1
           continue
@@ -420,7 +420,7 @@ if [ $back -eq 1 ];then
         g=0
         continue
         ;;
-      "G" )
+      G )
         if [ $n_move -eq 0 ];then
           n=$((ntrash-1))
           if [ $n -ge $max_show ];then
@@ -448,7 +448,7 @@ if [ $back -eq 1 ];then
         n_move=0
         continue
         ;;
-      "d" )
+      d )
         # Delete Trash
         delete_trash $n
 
@@ -468,7 +468,7 @@ if [ $back -eq 1 ];then
         set_header
         printall $n_offset $n
         ;;
-      "s" )
+      s )
         # Show Detail
         orig_ifs=$IFS
         IFS=","
@@ -485,9 +485,9 @@ if [ $back -eq 1 ];then
 
         printall
         ;;
-      "q"|$'\x1b' ) exit 0;;
+      q|$'\x1b' ) exit 0;;
       ""  ) break;;
-      "h" ) here=1;break;;
+      h ) here=1;break;;
       [0-9])
         if [ $n_move -gt 0 ];then
           n_move="$n_move""$c"
@@ -496,7 +496,7 @@ if [ $back -eq 1 ];then
         fi
         continue
         ;;
-      "*" ) continue;;
+      * ) continue;;
     esac
   done
 
