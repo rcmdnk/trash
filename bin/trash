@@ -197,7 +197,7 @@ if [ $back -eq 1 ];then
     if [ $ntrash -eq 0 ];then
       clear
       echo There is no trash
-      sleep 3
+      read -s -n 1 c
       exit 0
     fi
     nwidth=${#ntrash}
@@ -278,12 +278,12 @@ if [ $back -eq 1 ];then
       clear
       echo "$tlist might be corrupted"
       echo "Check $(nth $(($1+1))) trash information in $tlist"
-      sleep 3
+      read -s -n 1 c
       exit 1
     elif [ ! -e "$trash_name" ];then
       clear
       echo "Trash of $origin_name_short ($trash_name_short) does not exist in $tbox, remove from the list"
-      sleep 3
+      read -s -n 1 c
     fi
     rm -rf "$trash_name"
     sed -i.bak "\!${trash_name_short}\$!d" "$tlist"
@@ -481,7 +481,7 @@ if [ $back -eq 1 ];then
         echo $(nth $((n+1))) trash:
         echo Original file    : $origin_name_short
         echo File in trash box: $trash_name_short
-        sleep 3
+        read -s -n 1 c
 
         printall
         ;;
@@ -515,14 +515,14 @@ if [ $back -eq 1 ];then
     clear
     echo "$tlist might be corrupted"
     echo "Check $(nth $(($1+1))) trash information in $tlist"
-    sleep 3
+    read -s -n 1 c
     exit 1
   elif [ ! -e "$trash_name" ];then
     clear
     echo "$trash_name_short doesn't exist, remove from the list"
     sed -i.bak "\!${trash_name_short}\$!d" "$tlist"
     rm -f "$tlist.bak"
-    sleep 3
+    read -s -n 1 c
     exit 1
   fi
 
