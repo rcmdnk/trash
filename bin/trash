@@ -611,14 +611,14 @@ while [ "$#" -gt 0 ];do
     fi
   fi
 
-  origin_name=`echo $(cd "$(dirname $1)";pwd -P)/$(basename $1)`
+  origin_name=`echo $(cd "$(dirname "$1")";pwd -P)/$(basename "$1")`
   name=`echo $1 | sed -e "s|/$||" | sed -e "s|.*/||"`
-  trash_head=${tboxtoday}/${name}
-  trash_name=${trash_head}
+  trash_head="${tboxtoday}/${name}"
+  trash_name="${trash_head}"
   i=1
   while true;do
-    if [ -e ${trash_name} ];then
-      trash_name=${trash_head}.${i}
+    if [ -e "${trash_name}" ];then
+      trash_name="${trash_head}.${i}"
       i=`expr ${i} + 1`
     else
       break
