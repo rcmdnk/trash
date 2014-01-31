@@ -23,7 +23,12 @@
 #}}}
 
 # source sentaku
-. sentaku -n
+if type sentaku >& /dev/null;then
+  . sentaku -n
+else
+  echo "Install sentaku (https://github.com/rcmdnk/sentaku) first."
+  exit 1
+fi
 
 # Default variables
 _SENTAKU_INPUT_FILE=${TRASHLIST:-$HOME/.trashlist}
