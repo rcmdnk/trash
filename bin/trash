@@ -22,22 +22,35 @@
 #CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #}}}
 
-# Default variables
-rdir=0
-force=1
-confirm=0
-tbox=${TRASHBOX:-~/.Trash}
-tlist=${TRASHLIST:-~/.trashlist}
-maxboxsize=${MAXTRASHBOXSIZE:-1024}
-maxsize=${MAXTRASHSIZE:-102}
-clean=0
-clean_full=0
-list=0
-back=0
-verbose=0
+# source sentaku
+. sentaku -n
 
-# Help
-HELP="
+# Default variables
+_SENTAKU_INPUT_FILE=${TRASHLIST:-$HOME/.trashlist}
+_SENTAKU_MAX=10000000
+_SENTAKU_SEPARATOR=$'\n'
+
+_sf_initialize_user () { # {{{
+  # Default variables
+  rdir=0
+  force=1
+  confirm=0
+  tbox=${TRASHBOX:-$HOME/.Trash}
+  # Use more one depth directory to distinguish from other trash
+  # (especially for Mac's ~/.Trash case)
+  mytbox="$tbox/my_trash_box"
+  maxboxsize=${MAXTRASHBOXSIZE:-1024} #MB
+  maxsize=${MAXTRASHSIZE:-102} #MB
+  clean=0
+  clean_full=0
+  list=0
+  back=0
+  verbose=0
+  here=0
+  trashes=()
+
+  # Help
+  _s_help="
 Usage: trash [-rficClbv] [-v <verbose level>] [-t <trash_box>] <file/directory>
 
 Arguments:
@@ -58,16 +71,10 @@ Arguments:
 To use trash, please specify following variables
 in .bashrc or your setting file like (these rh values are default):
 
-At restore mode, you can use following keys (based on vim move):
- <n>   : (any numb), set n for move
- j     : n-down (if n is not defined, 1 down)
- ^D    : Half page down
- ^F    : Page down
- k     : n-up   (if n is not defined, 1 up)
- ^U    : Half page up
- ^B    : Page up
- gg    : Go to top    (if n is defined, go to n)
- G     : Go to bottom (if n is defined, go to n)
+At restore mode, you can use vim like move keys like j(up)/k(down)/gg(top)/G(bottom).
+
+In addition, following keys are available at restore mode:
+
  d     : Delete
  s     : Show details
  Enter : Select to bring back to the original place, and quit
@@ -83,67 +90,74 @@ export MAXTRASHSIZE=\`echo \$MAXTRASHBOXSIZE \"*\" 0.1|bc -l|cut -d. -f1\`
     # Trashes larger than MAXTRASHBOXSIZE will be removed by 'rm' directly
 "
 
-# Get option
-while getopts rfit:cClbv:h OPT;do
-  case $OPT in
-    "r" ) rdir=1 ;;
-    "f" ) force=1;confirm=0 ;;
-    "i" ) confirm=1;force=1 ;;
-    "t" ) tbox="$OPTARG" ;;
-    "c" ) clean=1 ;;
-    "C" ) clean_full=1 ;;
-    "l" ) list=1 ;;
-    "b" ) back=1 ;;
-    "v" ) verbose=$OPTARG ;;
-    "h" ) echo "$HELP" 1>&2;exit 0;;
-    * ) echo "$OPT is not expected."
-        echo "$HELP" 1>&2;exit 1;;
-  esac
-done
+# }}}
 
-# nth show helper function
-function nth () {
+_sf_check_args () { # {{{
+  _s_continue=0
+  while getopts rfit:cClbv:h OPT;do
+    case $OPT in
+      "r" ) rdir=1 ;;
+      "f" ) force=1;confirm=0 ;;
+      "i" ) confirm=1;force=1 ;;
+      "t" ) tbox="$OPTARG" ;;
+      "c" ) clean_full=0;clean=1;;
+      "C" ) clean_full=1;clean=1;;
+      "l" ) list=1 ;;
+      "b" ) back=1 ;;
+      "v" ) verbose=$OPTARG ;;
+      "h" ) echo "$_s_help" >/dev/tty;return 0;;
+      * ) echo "$_s_help" >/dev/tty;return 1;;
+    esac
+  done
+  shift $(($OPTIND - 1))
+  trashes=("$@")
+
+  if [ $clean -eq 1 ];then
+    cleanup $clean_full
+    return $?
+  fi
+
+  if [ $list -eq 1 ];then
+    listup
+    return $?
+  fi
+
+  if [ $back -eq 1 ];then
+    _s_continue=1
+    return 0
+  fi
+
+} # }}}
+
+
+cleanup () { # Clean up the trash box {{{
+  # Cleanup fully
   if [ $1 -eq 1 ];then
-    echo 1st
-  elif [ $1 -eq 2 ];then
-    echo 2nd
-  elif [ $1 -eq 3 ];then
-    echo 3rd
-  else
-    echo ${1}th
+    rm -rf "$mytbox"
+    rm -rf "$_s_file"
+    touch "$_s_file"
+    return 0
   fi
-}
 
-
-shift $(($OPTIND - 1))
-
-# Use more one depth directory to distinguish from other trash
-# (especially for Mac's ~/.Trash case)
-mytbox="$tbox/my_trash_box"
-
-# Clean up the trash box
-if [ $clean_full -eq 1 ];then
-  rm -rf "$mytbox"
-  rm -rf "$tlist"
-  touch "$tlist"
-  exit 0
-elif [ $clean -eq 1 ];then
+  # Check if trash box exists or not
   if [ ! -d ${mytbox} ];then
-    exit 0
+    return 0
   fi
+
   # Clean up trash box
-  touch "$tlist"
+  touch "$_s_file"
   while [ 1 ];do
     trash_box_size=`du -ms ${mytbox} |awk '{print $1}'`
     if [ ${trash_box_size} -gt ${maxboxsize} ];then
-      delete_dir=`ls -tr ${TRASHBOX} | head -1`
+      delete_dir=`ls -tr ${tbox} | head -1`
       rm -rf "${mytbox}/${delete_dir}"
-      sed -i.bak "\!${mybox}/${delete_dir}!d" "$tlist"
-      rm -f "$tlist.bak"
+      sed -i.bak "\!${mybox}/${delete_dir}!d" "$_s_file"
+      rm -f "${_s_file}.bak"
     else
       break
     fi
   done
+
   # Clean up trash list
   while read line;do
     orig_ifs=$IFS
@@ -153,25 +167,30 @@ elif [ $clean -eq 1 ];then
     trash_name_short=${tinfo[2]}
     trash_name=$(sh -c "echo $trash_name_short") # Expand ~
     if [ ! -e "$trash_name" ];then
-      sed -i.bak "\!${trash_name_short}\$!d" "$tlist"
-      rm -f "$tlist.bak"
+      sed -i.bak "\!${trash_name_short}\$!d" "$_s_file"
+      rm -f "$_s_file.bak"
     fi
-  done < "$tlist"
-  exit 0
-fi
+  done < "$_s_file"
+  return 0
+} # }}}
 
-# List up deleted files/directories
-if [ $list -eq 1 ];then
-  # List up trashes
-  touch "$tlist"
-  i=1
-  ntrash=$(cat "$tlist"|wc -l);ntrash=$(echo $ntrash)
+listup () { # List up deleted files/directories {{{
+  touch "$_s_file"
+  ntrash=$(cat "$_s_file"|wc -l);ntrash=$(echo $ntrash)
   if [ $ntrash -eq 0 ];then
     echo There is no trash
-    exit 0
+    return 0
+  fi
+  if type tac >& /dev/null;then
+    reverse=tac
+  elif tail --version 2>/dev/null|grep -q GNU;then
+    reverse='tail -r'
+  else
+    reverse='cat'
   fi
   nwidth=${#ntrash}
-  while read line;do
+  local i=0
+  $reverse "$_s_file"|while read line;do
     orig_ifs=$IFS
     IFS=","
     t=($line)
@@ -184,376 +203,132 @@ if [ $list -eq 1 ];then
       printf "%${nwidth}d %s\n" $i "${t[1]}"
     fi
     ((i++))
-  done < "$tlist"
-  exit 0
-fi
+  done
+} # }}}
 
-# Bring back a trash
-if [ $back -eq 1 ];then
-
-  function get_trash_list () {
-    touch "$tlist"
-    ntrash=$(cat "$tlist"|wc -l);ntrash=$(echo $ntrash)
-    if [ $ntrash -eq 0 ];then
-      clear
-      echo There is no trash
-      read -s -n 1 c
-      exit 0
-    fi
-    nwidth=${#ntrash}
-    orig_ifs=$IFS
-    IFS=$'\n'
-    trash_list=($(cat "$tlist"))
-    IFS=$orig_ifs
-  }
-
-  function set_header () {
-    # Set variables
-    header=" $ntrash trashes in total
+_sf_set_header () { # {{{
+  _s_header=""
+  if [ $_s_noheader = 1 -o $_s_lines -lt 10 ];then
+    return
+  fi
+  if [ $_s_cols -ge 62 ];then
+    _s_header=" $_s_n trashes in total
  vim like move (j/k/gg/G etc...)
  d(delete), s(show details), q(quit)
  Enter: Select to bring back to the original place, and quit
- h: Select to copy it to current directory, and quit
-"
+ h: Select to copy it here (current directory), and quit"
+  elif [ $_s_cols -ge 40 ];then
+    _s_header=" $_s_n trashes in total
+ vim like move (j/k/gg/G etc...)
+ d(delete), s(show details), q(quit)
+ Enter: Bring it back
+ h: Copy it here (current directory)"
+  fi
+}  # }}}
 
-    ext_row=$(echo "$header"|wc -l)
-    lines=$(tput lines)
-    cols=$(tput cols)
-    max_show=$ntrash
-    if [ $ntrash -gt $((lines-ext_row)) ];then
-      max_show=$((lines-ext_row))
-    fi
-  }
+_sf_show () { # _sf_show [is_last [n_show]] {{{
+  local is_last=1
+  local n_show=${2:-$_s_cols}
 
-  function printline () {
-    local orig_ifs=$IFS
-    IFS=","
-    local tinfo=(${trash_list[$3]})
-    IFS=$orig_ifs
-    local trash_show=${tinfo[1]}
-    if [ ${#trash_show} -gt $((cols-nwidth-2)) ];then
-      trash_show="${trash_show: $((${#trash_show}-cols+nwidth+2))}"
-    fi
-    tput cup $(($2)) 0
-    if [ $1 -eq 1 ];then
-      printf "\e[7m%${nwidth}d: ${trash_show}\e[m" $(($3+1))
+  local orig_ifs=$IFS
+  IFS=","
+  local tinfo=($_s_show)
+  IFS=$orig_ifs
+  local day=${tinfo[0]}
+  local trash=${tinfo[1]}
+  local dest=${tinfo[2]}
+
+  if [ $verbose -ge 1 ];then
+    n_show=$((n_show-${#day}-1))
+  fi
+  if [ ${#trash} -gt $n_show ];then
+    if [ "x$ZSH_VERSION" != "x" ];then
+      trash="${trash[$((${#trash}-$n_show)),-1]}"
     else
-      printf "%${nwidth}d: ${trash_show}" $(($3+1))
+      trash="${trash: $((${#trash}-$n_show))}"
     fi
-    tput cup $(($2)) 0
-  } # }}}
+  fi
+  _s_show="$trash"
+  if [ $verbose -ge 1 ];then
+    _s_show="$day $trash"
+  fi
+} # }}}
 
-  function printall () {
-    local offset=0
-    local select=0
-    if [ $# -gt 0 ];then
-      offset=$1
-      if [ $# -gt 1 ];then
-        select=$2
-      fi
-    fi
-    clear
-    # Header
-    echo "$header"
-    local i
-    for ((i=0; i<max_show; i++));do
-      if [ $((i+offset)) -eq $select ];then
-        printline 1 $((i+ext_row)) $((i+offset))
-      else
-        printline 0 $((i+ext_row)) $((i+offset))
-      fi
-    done
-  }
+_sf_delete () { # {{{
+  local n=$_s_current_n
+  local orig_ifs=$IFS
+  IFS=","
+  local tinfo=(${_s_inputs[$n]})
+  IFS=$orig_ifs
+  local origin_name_short=${tinfo[1]}
+  local trash_name_short=${tinfo[2]}
+  local origin_name=$(sh -c "echo $origin_name_short") # Expand ~
+  local trash_name=$(sh -c "echo $trash_name_short") # Expand ~
+  if [ "$origin_name" = "" ] || [ "$trash_name" = "" ];then
+    _sf_echo "$tlist might be corrupted
+Check $(_sf_nth $(($1+1))) trash information in $tlist"
+    _sf_quit 1
+    return 1
+  elif [ ! -e "$trash_name" ];then
+    _sf_echo "Trash of $origin_name_short ($trash_name_short) does not exist in $tbox, remove from the list"
+  fi
+  rm -rf "$trash_name"
 
-  function delete_trash () {
-    local orig_ifs=$IFS
-    IFS=","
-    local tinfo=(${trash_list[$1]})
-    IFS=$orig_ifs
-    local origin_name_short=${tinfo[1]}
-    local trash_name_short=${tinfo[2]}
-    local origin_name=$(sh -c "echo $origin_name_short") # Expand ~
-    local trash_name=$(sh -c "echo $trash_name_short") # Expand ~
-    if [ "$origin_name" = "" ] || [ "$trash_name" = "" ];then
-      clear
-      echo "$tlist might be corrupted"
-      echo "Check $(nth $(($1+1))) trash information in $tlist"
-      read -s -n 1 c
-      exit 1
-    elif [ ! -e "$trash_name" ];then
-      clear
-      echo "Trash of $origin_name_short ($trash_name_short) does not exist in $tbox, remove from the list"
-      read -s -n 1 c
-    fi
-    rm -rf "$trash_name"
-    sed -i.bak "\!${trash_name_short}\$!d" "$tlist"
-    rm -f "$tlist.bak"
-  }
-
-  function trash_exit () {
-    # clear after selection
-    clear
-
-    # Show cursor
-    tput cnorm 2>/dev/null || tput vs 2>/dev/null
-
-    # Restore display
-    tput rmcup 2>/dev/null || tput te 2>/dev/null
-
-    # Enable echo input
-    stty echo
-  }
-
-  # Set trap
-  trap trash_exit 0
-
-  # Hide cursor
-  tput civis 2>/dev/null || tput vi 2>/dev/null
-
-  # Save current display
-  tput smcup 2>/dev/null || tput ti 2>/dev/null
-
-  # Hide any input (need to cleanup a print, especially when re-draw with printall.)
-  stty -echo
-
-  # First view
-  get_trash_list
-  set_header
-  printall
-
-  # Select trash
-  n=0
-  n_offset=0
-  cursor_r=$ext_row
-  g=0
-  n_move=0
-  here=0
-  tput cup $cursor_r 0
-
-  while : ;do
-    read -s -n 1 c
-    case $c in
-      j|$'\x04'|$'\x06' ) # j/^D/^F
-        if [ $c = $'\x04' ];then
-          n_move=$((max_show/2))
-        elif [ $c = $'\x06' ];then
-          n_move=$((max_show))
-        elif [ $n_move -eq 0 ];then
-          n_move=1
-        fi
-        all=0
-        printline 0 $cursor_r $n
-        for ((i=0; i<n_move; i++));do
-          if [ $n -eq $((ntrash-1)) ];then
-            :
-          elif [ $cursor_r -eq $((lines-1)) ];then
-            ((n_offset++));((n++))
-            all=1
-          else
-            ((cursor_r++));((n++))
-          fi
-        done
-        if [ $all -eq 1 ];then
-          printall $n_offset $n
-        else
-          printline 1 $cursor_r $n
-        fi
-        g=0
-        n_move=0
-        continue
-        ;;
-      k|$'\x15'|$'\x02' ) # k/^U/^B
-        if [ $c = $'\x15' ];then
-          n_move=$((max_show/2))
-        elif [ $c = $'\x02' ];then
-          n_move=$((max_show))
-        elif [ $n_move -eq 0 ];then
-          n_move=1
-        fi
-        all=0
-        printline 0 $((cursor_r)) $n
-        for ((i=0; i<n_move; i++));do
-          if [ $cursor_r -ne $ext_row ];then
-            ((cursor_r--));((n--))
-          elif [ $n_offset -gt 0 ];then
-            ((n_offset--));((n--))
-            all=1
-          else
-            :
-          fi
-        done
-        if [ $all -eq 1 ];then
-          printall $n_offset $n
-        else
-          printline 1 $cursor_r $n
-        fi
-        g=0
-        n_move=0
-        continue
-        ;;
-      g )
-        if [ $g -eq 0 ];then
-          g=1
-          continue
-        fi
-
-        if [ $n_move -eq 0 ];then
-          n=0
-          n_offset=0
-          cursor_r="$ext_row"
-        elif [ $n_move -gt $ntrash ];then
-          :
-        elif [ $n_move -le $n_offset ];then
-          n=$((n_move-1))
-          n_offset=$n
-          cursor_r=$ext_row
-        elif [ $((n_move)) -gt $((n_offset+max_show)) ];then
-          n=$((n_move-1))
-          n_offset=$((n-max_show+1))
-          cursor_r=$((lines-1))
-        else
-          n=$((n_move-1))
-          cursor_r=$((ext_row+n-n_offset))
-        fi
-        printall $n_offset $n
-        n_move=0
-        g=0
-        continue
-        ;;
-      G )
-        if [ $n_move -eq 0 ];then
-          n=$((ntrash-1))
-          if [ $n -ge $max_show ];then
-            n_offset=$((ntrash-max_show))
-            cursor_r=$((lines-1))
-          else
-            n_offset=0
-            cursor_r=$((ext_row+n))
-          fi
-        elif [ $n_move -gt $ntrash ];then
-          :
-        elif [ $n_move -le $n_offset ];then
-          n=$((n_move-1))
-          n_offset=$n
-          cursor_r=$ext_row
-        elif [ $n_move -gt $((n_offset+max_show)) ];then
-          n=$((n_move-1))
-          n_offset=$((n-max_show+1))
-          cursor_r=$((lines-1))
-        else
-          n=$((n_move-1))
-          cursor_r=$((ext_row+n-n_offset))
-        fi
-        printall $n_offset $n
-        n_move=0
-        continue
-        ;;
-      d )
-        # Delete Trash
-        delete_trash $n
-
-        # Re-read trash list
-        get_trash_list
-
-        # Check a number of trashes
-        if [ $n -eq $ntrash ];then
-          if [ $n_offset -gt 0 ];then
-            ((n_offset--));((n--))
-          else
-            ((cursor_r--));((n--))
-          fi
-        fi
-
-        # Print
-        set_header
-        printall $n_offset $n
-        ;;
-      s )
-        # Show Detail
-        orig_ifs=$IFS
-        IFS=","
-        tinfo=(${trash_list[$1]})
-        IFS=$orig_ifs
-        origin_name_short=${tinfo[1]}
-        trash_name_short=${tinfo[2]}
-
-        clear
-        echo $(nth $((n+1))) trash:
-        echo Original file    : $origin_name_short
-        echo File in trash box: $trash_name_short
-        read -s -n 1 c
-
-        printall
-        ;;
-      q|$'\x1b' ) exit 0;;
-      ""  ) break;;
-      h ) here=1;break;;
-      [0-9])
-        if [ $n_move -gt 0 ];then
-          n_move="$n_move""$c"
-        else
-          n_move=$c
-        fi
-        continue
-        ;;
-      * ) continue;;
-    esac
+  rm -f "$_s_file"
+  local i
+  for ((i=0; i<$_s_n; i++));do
+    [ $i -ne $n ] && printf "%s$_s_s_push" "${_s_inputs[$i]}" >> "$_s_file"
   done
+  _sf_get_values
+} # }}}
 
-  # Get trash information
+_sf_s () { # {{{
   orig_ifs=$IFS
   IFS=","
-  tinfo=(${trash_list[$n]})
+  local tinfo=(${_s_inputs[$_s_current_n]})
   IFS=$orig_ifs
-  origin_name_short=${tinfo[1]}
-  trash_name_short=${tinfo[2]}
-  origin_name=$(sh -c "echo $origin_name_short") # Expand ~
-  trash_name=$(sh -c "echo $trash_name_short") # Expand ~
+  local origin_name_short=${tinfo[1]}
+  local trash_name_short=${tinfo[2]}
+  _sf_echo "$(_sf_nth $_s_current_n) trash:
+  Original file    : $origin_name_short
+  File in trash box: $trash_name_short"
+} # }}}
 
-  # Check trash information
-  if [ "$origin_name" = "" ] || [ "$trash_name" = "" ];then
-    clear
-    echo "$tlist might be corrupted"
-    echo "Check $(nth $(($1+1))) trash information in $tlist"
-    read -s -n 1 c
-    exit 1
-  elif [ ! -e "$trash_name" ];then
-    clear
-    echo "$trash_name_short doesn't exist, remove from the list"
-    sed -i.bak "\!${trash_name_short}\$!d" "$tlist"
-    rm -f "$tlist.bak"
-    read -s -n 1 c
-    exit 1
-  fi
+_sf_h () { # {{{
+  here=1
+  _sf_quit
+} # }}}
 
-  # Bring back
-  target="$origin_name"
+_sf_execute () { # {{{
+  orig_ifs=$IFS
+  IFS=","
+  local tinfo=(${_s_inputs[$_s_current_n]})
+  IFS=$orig_ifs
+  local origin_name_short=${tinfo[1]}
+  local trash_name_short=${tinfo[2]}
+  local origin_name=$(sh -c "echo $origin_name_short") # Expand ~
+  local trash_name=$(sh -c "echo $trash_name_short") # Expand ~
+  local target="$origin_name"
   if [ $here -eq 1 ];then
-    target=$(basename $origin_name)
+    target="$(basename $origin_name)"
   fi
   if [ $confirm -eq 1 ];then
     if [ -e "$target" ];then
-      clear
-      echo -n "$origin_name_short exists. Do you want to overwrite from trash box? : "
-      tput cnorm 2>/dev/null || tput vs 2>/dev/null
-      stty echo
-      read yes
-      if ! [[ "$yes" =~ ^[yY] ]];then
-        exit 0
+      _sf_yn "$target exists. Do you want to overwrite from trash box?"
+      local ret=$?
+      if [ $ret -ne 0 ];then
+        return 0
       fi
     fi
   fi
   if [ $here -eq 1 ];then
-    cp "$trash_name" "$target"
-    echo ${target} was copied from ${trash_name_short}
+    echo Copying ${origine_name} from ${trash_name_short}
+    cp -r "$trash_name" "$target"
   else
-    mv "$trash_name" "$target"
-    echo ${target} was restored from ${trash_name_short}
-    sed -i.bak "\!${trash_name_short}\$!d" "$tlist"
-    rm -f "$tlist.bak"
+    echo Brin ${origine_name} back from ${trash_name_short}
+    mv -r "$trash_name" "$target"
   fi
-  exit 0
-fi
+} # }}}
 
 # Check arguments
 if [ "$#" -lt 1 ];then
