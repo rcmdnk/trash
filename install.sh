@@ -1,5 +1,6 @@
-#!/bin/sh
+#!/usr/bin/env bash
 scripts=(https://raw.github.com/rcmdnk/trash/master/bin/trash)
+scripts_dep=(https://raw.github.com/rcmdnk/sentaku/master/bin/sentaku)
 if [ x"$prefix" = x ];then
   prefix=/usr/local
 fi
@@ -31,4 +32,12 @@ for s in ${scripts[@]};do
   sname=`basename $s`
   echo Intalling ${sname}...
   $sudo curl -fsSL -o $prefix/bin/$sname $s
+done
+
+for s in ${scripts_dep[@]};do
+  sname=`basename $s`
+  if ! type $sname >& /dev/null;then
+    echo Intalling ${sname}...
+    $sudo curl -fsSL -o $prefix/bin/$sname $s
+  fi
 done
