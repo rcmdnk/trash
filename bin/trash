@@ -376,69 +376,15 @@ _sf_h () { # {{{
   _sf_select
 } # }}}
 
-_sf_search () { # {{{
-  local prefix=""
-  _s_pre_inputs=("${_s_inputs[@]}")
-  _s_search="Search:"
-  _sf_printall
-  while : ;do
-    _sf_read
-    local r=$_s_read
-    case $r in
-      $'\x1b') # Esc
-        if [ $_s_n -eq 0 ];then
-          _s_inputs=("${_s_pre_inputs[@]}")
-          _s_n=${#_s_inputs[@]}
-          _s_search=""
-          _sf_reset
-        fi
-        return
-        ;;
-      ""|$'\n')
-        _sf_select
-        return
-        ;;
-      $'\x08')
-        if [ "$prefix" = "" ];then
-          _s_search=""
-          _sf_reset
-          return
-        fi
-        if [ "x$ZSH_VERSION" != "x" ];then
-          prefix="${prefix[0,$((${#prefix}-2))]}" # need for zsh version < 5
-        else
-          prefix="${prefix: 0: ((${#prefix}-1))}"
-        fi
-        _s_inputs=("${_s_pre_inputs[@]}")
-        _s_n=${#_s_inputs[@]}
-        ;;
-      *)prefix="$prefix$_s_read";;
-    esac
-
-    _s_search="Search:$prefix"
-    local inputs
-    inputs=()
-    if [ "$prefix" = "" ];then
-      _s_inputs=("${_s_pre_inputs[@]}")
-      _s_n=${#_s_inputs[@]}
-      _s_search="Search:"
-      _sf_reset
-      continue
-    fi
-    local i
-    for ((i=0; i<$_s_n; i++));do
-      orig_ifs=$IFS
-      IFS=","
-      local tinfo=(${_s_inputs[$i]})
-      IFS=$orig_ifs
-      if echo "${tinfo[1]}"| grep -q "^$prefix";then
-        inputs=("${inputs[@]}" "${_s_inputs[$i]}")
-      fi
-    done
-    _s_inputs=("${inputs[@]}")
-    _s_n=${#_s_inputs[@]}
-    _sf_reset
-  done
+_sf_search_check () { # {{{
+  orig_ifs=$IFS
+  IFS=","
+  local tinfo=(${2})
+  IFS=$orig_ifs
+  if echo "${tinfo[1]}"| grep -q "^${1}";then
+    return 0
+  fi
+  return 1
 } # }}}
 
 _sf_execute () { # {{{
