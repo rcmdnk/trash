@@ -10,11 +10,11 @@ It is stressful because we are used to benefit from the trash box on a GUI syste
 
 :white_check_mark: current version requires [sentaku](https://github.com/rcmdnk/sentaku).
 
-Please install sentaku or use
+If you use Homebrew or Curl to insatll, sentaku will be installed automatically, too.
+
+If you install the script directly, please install sentaku or use
 [standalone version](https://github.com/rcmdnk/trash/tree/standalone)
 (standalone version could be obsolete).
-
-If you use Homebrew to insatll, sentaku will be installed automatically, too.
 
 # Installation
 
@@ -50,10 +50,10 @@ If you want to install other directory, do like:
 
     $ curl -fsSL https://raw.github.com/rcmdnk/trash/install/install.sh|  prefix=~/usr/local/ sh
 
-Or, simply download scripts and set where you like.
+Or, simply download the script and set where you like.
 
 :warning: Install [sentaku](https://github.com/rcmdnk/sentaku), too
-if you did not use Homebrew.
+if you download directly.
 
 # Usage
 
