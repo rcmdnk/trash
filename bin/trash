@@ -76,7 +76,7 @@ Arguments:
 To use trash, please specify following variables
 in .bashrc or your setting file like (these rh values are default):
 
-At restore mode, you can use vim like move keys like j(up)/k(down)/gg(top)/G(bottom).
+At restore mode, you can use vim like move keys like j(down)/k(up)/gg(top)/G(bottom).
 
 In addition, following keys are available at restore mode:
 
