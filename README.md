@@ -137,7 +137,3 @@ In addition, you can empty your trash box for trash by
 * [rm -rfのプロテクト、コマンドラインでのゴミ箱](http://rcmdnk.github.io/blog/2013/04/23/computer-bash-linux-mac/)
 
 * [コマンドラインで使うゴミ箱コマンド](http://rcmdnk.github.io/blog/2014/01/12/computer-bash/)
-
-
-[![Bitdeli Badge](https://d2weczhvl823v0.cloudfront.net/rcmdnk/trash/trend.png)](https://bitdeli.com/free "Bitdeli Badge")
-
