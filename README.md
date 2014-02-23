@@ -10,7 +10,7 @@ It is stressful because we are used to benefit from the trash box on a GUI syste
 
 :white_check_mark: current version requires [sentaku](https://github.com/rcmdnk/sentaku).
 
-If you use Homebrew or Curl to insatll, sentaku will be installed automatically, too.
+If you use Homebrew or cURL to insatll, sentaku will be installed automatically, too.
 
 If you install the script directly, please install sentaku or use
 [standalone version](https://github.com/rcmdnk/trash/tree/standalone)
