@@ -110,8 +110,9 @@ _sf_check_args () { # {{{
       "l" ) list=1 ;;
       "b" ) back=1 ;;
       "v" ) verbose=$OPTARG ;;
-      "h" ) echo "$_s_help" >/dev/tty;return 0;;
-      * ) echo "$_s_help" >/dev/tty;return 1;;
+      "h" ) echo "$_s_help"|${PAGER:-less} >/dev/tty;return 0;;
+      * ) echo "Check \"$(basename $0) -h\" for more information" >/dev/tty;return 1;;
+
     esac
   done
   shift $(($OPTIND - 1))
