@@ -201,6 +201,7 @@ _sf_check_args () { # {{{
     local origin_name_short="${origin_name/#$HOME/~}"
     local trash_name_short="${trash_name/#$HOME/~}"
     echo $origin_name_short was moved to $trash_name_short >/dev/tty
+    touch $_s_file
     mv "$_s_file" "${_s_file}.bak"
     echo "`date +%Y%m%d-%H:%M`,$origin_name_short,$trash_name_short" > "$_s_file"
     cat "${_s_file}.bak" >> "$_s_file"
