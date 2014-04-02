@@ -110,8 +110,9 @@ _sf_check_args () { # {{{
       "l" ) list=1 ;;
       "b" ) back=1 ;;
       "v" ) verbose=$OPTARG ;;
-      "h" ) echo "$_s_help" >/dev/tty;return 0;;
-      * ) echo "$_s_help" >/dev/tty;return 1;;
+      "h" ) echo "$_s_help"|${PAGER:-less} >/dev/tty;return 0;;
+      * ) echo "Check \"$(basename $0) -h\" for more information" >/dev/tty;return 1;;
+
     esac
   done
   shift $(($OPTIND - 1))
@@ -201,6 +202,7 @@ _sf_check_args () { # {{{
     local origin_name_short="${origin_name/#$HOME/~}"
     local trash_name_short="${trash_name/#$HOME/~}"
     echo $origin_name_short was moved to $trash_name_short >/dev/tty
+    touch $_s_file
     mv "$_s_file" "${_s_file}.bak"
     echo "`date +%Y%m%d-%H:%M`,$origin_name_short,$trash_name_short" > "$_s_file"
     cat "${_s_file}.bak" >> "$_s_file"
