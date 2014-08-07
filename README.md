@@ -58,8 +58,7 @@ if you download directly.
 # Usage
 
     # Help
-    HELP="
-    Usage: trash [-rficClbv] [-v <verbose level>] [-t <trash_box>] <file/directory>
+    Usage: trash [-rficClbVv] [-v <verbose level>] [-t <trash_box>] <file/directory>
     
     Arguments:
        -r              Remove directory (default: $rdir)
@@ -74,7 +73,8 @@ if you download directly.
                        0 : Only original location (default).
                        1 : With Delete date-time (yyyymdd-hh:mm).
                        2 : With Current location (in the trash box).
-       -h              Print this HELP and exit
+       -V              Show version
+       -h              Show help
     
     To use trash, please specify following variables
     in .bashrc or your setting file like (these rh values are default):
@@ -91,6 +91,7 @@ if you download directly.
      G     : Go to bottom (if n is defined, go to n)
      d     : Delete
      s     : Show details
+     /     : Search mode
      Enter : Select to bring back to the original place, and quit
      h     : Select to copy it to current directory, and quit
      q     : Quit

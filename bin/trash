@@ -1,5 +1,16 @@
 #!/usr/bin/env bash
 
+## Description {{{
+#
+# Remove Command using a trash box.
+#
+# Usage: trash [-rficClbVv] [-v <verbose level>] [-t <trash_box>] <file/directory>
+#
+TRASH_VERSION=v0.0.5
+TRASH_DATE="07/Aug/2014"
+#
+# }}}
+
 #The MIT License (MIT) {{{
 #
 #Copyright (c) 2013 rcmdnk
@@ -22,18 +33,20 @@
 #CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #}}}
 
-# source sentaku
+# source sentaku {{{
 if type sentaku >& /dev/null;then
   . sentaku -n
 else
   echo "Install sentaku (https://github.com/rcmdnk/sentaku) first."
   exit 1
 fi
+# }}}
 
-# Default variables
+# Default variables {{{
 _SENTAKU_INPUT_FILE=${TRASHLIST:-$HOME/.trashlist}
 _SENTAKU_MAX=10000000
 _SENTAKU_SEPARATOR=$'\n'
+# }}}
 
 _sf_initialize_user () { # {{{
   # Default variables
@@ -56,7 +69,7 @@ _sf_initialize_user () { # {{{
 
   # Help
   _s_help="
-Usage: trash [-rficClbv] [-v <verbose level>] [-t <trash_box>] <file/directory>
+Usage: trash [-rficClbV] [-v <verbose level>] [-t <trash_box>] <file/directory>
 
 Arguments:
    -r              Remove directory (default: $rdir)
@@ -71,7 +84,8 @@ Arguments:
                    0 : Only original location (default).
                    1 : With Delete date-time (yyyymdd-hh:mm).
                    2 : With Current location (in the trash box).
-   -h              Print this HELP and exit
+   -V              Show version
+   -h              Show this help
 
 To use trash, please specify following variables
 in .bashrc or your setting file like (these rh values are default):
@@ -84,6 +98,7 @@ In addition, following keys are available at restore mode:
  s     : Show details
  Enter : Select to bring back to the original place, and quit
  h     : Select to copy it to current directory (here), and quit
+ /     : Search mode
  q     : Quit
 
 export TRASHLIST=~/.trashlist # Where trash list is written
@@ -99,7 +114,7 @@ export MAXTRASHSIZE=\`echo \$MAXTRASHBOXSIZE \"*\" 0.1|bc -l|cut -d. -f1\`
 
 _sf_check_args () { # {{{
   _s_continue=0
-  while getopts rfit:cClbv:h OPT;do
+  while getopts rfit:cClbVv:h OPT;do
     case $OPT in
       "r" ) rdir=1 ;;
       "f" ) force=1;confirm=0 ;;
@@ -110,6 +125,7 @@ _sf_check_args () { # {{{
       "l" ) list=1 ;;
       "b" ) back=1 ;;
       "v" ) verbose=$OPTARG ;;
+      "V" ) echo "$(basename $0) $TRASH_VERSION $TRASH_DATE"; return 0;;
       "h" ) echo "$_s_help"|${PAGER:-less} >/dev/tty;return 0;;
       * ) echo "Check \"$(basename $0) -h\" for more information" >/dev/tty;return 1;;
 
@@ -209,7 +225,6 @@ _sf_check_args () { # {{{
     rm -f "${_s_file}.bak"
   done
 } # }}}
-
 
 cleanup () { # Clean up the trash box {{{
   # Cleanup fully
@@ -341,6 +356,34 @@ _sf_show () { # _sf_show [is_last [n_show]] {{{
   if [ $verbose -ge 1 ];then
     _s_show="$day $trash"
   fi
+
+  # Color search words
+  if [ "$_s_search_words" != "" ];then
+    local negative=""
+    if [ $is_selected -eq 1 ];then
+      negative=";7"
+    fi
+    if [ $_s_search_opt -le 1 ];then
+      if [ $_s_search_opt -eq 0 ];then
+        local ic="i"
+      else
+        local ic=""
+      fi
+      local words=(${_s_search_words})
+      local w
+      for w in ${words[@]};do
+        _s_show=$(echo $_s_show|perl -pe "s|($w)|\e[31${negative}m\1\e[0${negative}m|g$ic")
+      done
+    else
+      if [ $_s_search_opt -eq 2 ];then
+        local ic="i"
+      else
+        local ic=""
+      fi
+      w="${_s_search_words}"
+      _s_show=$(echo $_s_show|perl -pe "s|($w)|\e[31${negative}m\1\e[0${negative}m|g$ic")
+    fi
+  fi
 } # }}}
 
 _sf_d () { # {{{
@@ -386,12 +429,32 @@ _sf_h () { # {{{
 _sf_search_check () { # {{{
   orig_ifs=$IFS
   IFS=","
-  local tinfo=(${2})
+  local tinfo=(${1})
   IFS=$orig_ifs
-  if echo "${tinfo[1]}"| grep -q "^${1}";then
-    return 0
+  local input="${tinfo[1]}"
+  if [ $_s_search_opt -le 1 ];then
+    if [ $_s_search_opt -eq 0 ];then
+      local ic="-i"
+    else
+      local ic=""
+    fi
+    local words=(${_s_search_words})
+    local w
+    for w in ${words[@]};do
+      if ! echo "${input}"| grep $ic -q "${w}";then
+        return 1
+      fi
+    done
+  else
+    if [ $_s_search_opt -eq 2 ];then
+      local ic="-i"
+    else
+      local ic=""
+    fi
+    if ! echo "${input}"| grep $ic -q "^${_s_search_words}";then
+      return 1
+    fi
   fi
-  return 1
 } # }}}
 
 _sf_execute () { # {{{
