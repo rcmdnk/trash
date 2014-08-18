@@ -6,8 +6,8 @@
 #
 # Usage: trash [-rficClbVv] [-v <verbose level>] [-t <trash_box>] <file/directory>
 #
-TRASH_VERSION=v0.0.5
-TRASH_DATE="07/Aug/2014"
+TRASH_VERSION=v0.1.0
+TRASH_DATE="18/Aug/2014"
 #
 # }}}
 
@@ -219,7 +219,7 @@ _sf_check_args () { # {{{
     local trash_name_short="${trash_name/#$HOME/~}"
     echo $origin_name_short was moved to $trash_name_short >/dev/tty
     touch $_s_file
-    mv "$_s_file" "${_s_file}.bak"
+    cp "$_s_file" "${_s_file}.bak"
     echo "`date +%Y%m%d-%H:%M`,$origin_name_short,$trash_name_short" > "$_s_file"
     cat "${_s_file}.bak" >> "$_s_file"
     rm -f "${_s_file}.bak"
@@ -229,9 +229,8 @@ _sf_check_args () { # {{{
 cleanup () { # Clean up the trash box {{{
   # Cleanup fully
   if [ $1 -eq 1 ];then
-    rm -rf "$mytbox"
-    rm -rf "$_s_file"
-    touch "$_s_file"
+    rm -rf "$mytbox/*"
+    echo -n > "$_s_file"
     return 0
   fi
 
@@ -247,7 +246,8 @@ cleanup () { # Clean up the trash box {{{
     if [ ${trash_box_size} -gt ${maxboxsize} ];then
       delete_dir=`ls -tr ${tbox} | head -1`
       rm -rf "${mytbox}/${delete_dir}"
-      sed -i.bak "\!${mybox}/${delete_dir}!d" "$_s_file"
+      cp "$_s_file" "${_s_file}.bak"
+      grep -v "${delete_dir}.bak" > "$_s_file"
       rm -f "${_s_file}.bak"
     else
       break
@@ -263,7 +263,8 @@ cleanup () { # Clean up the trash box {{{
     trash_name_short=${tinfo[2]}
     trash_name=$(sh -c "echo $trash_name_short") # Expand ~
     if [ ! -e "$trash_name" ];then
-      sed -i.bak "\!${trash_name_short}\$!d" "$_s_file"
+      cp "$_s_file" "${_s_file}.bak"
+      grep -v "${delete_dir}.bak" > "$_s_file"
       rm -f "$_s_file.bak"
     fi
   done < "$_s_file"
@@ -277,19 +278,9 @@ listup () { # List up deleted files/directories {{{
     echo There is no trash
     return 0
   fi
-  if type tac >& /dev/null;then
-    reverse=tac
-  elif ! tail --version 2>/dev/null|grep -q GNU;then
-    reverse='tail -r'
-  else
-    reverse='cat'
-  fi
   nwidth=${#ntrash}
   local i=0
-  if [ "$reverse" != "cat" ];then
-    i=$((ntrash-1))
-  fi
-  $reverse "$_s_file"|while read line;do
+  sed -e '1!G;h;$!d' "$_s_file"|while read line;do
     orig_ifs=$IFS
     IFS=","
     t=($line)
@@ -301,11 +292,7 @@ listup () { # List up deleted files/directories {{{
     else
       printf "%${nwidth}d %s\n" $i "${t[1]}"
     fi
-    if [ "$reverse" = "cat" ];then
-      ((i++))
-    else
-      ((i--))
-    fi
+    ((i--))
   done
 } # }}}
 
