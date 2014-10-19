@@ -7,13 +7,13 @@
 # Usage: trash [-rficClbVv] [-v <verbose level>] [-t <trash_box>] <file/directory>
 #
 TRASH_VERSION=v0.1.0
-TRASH_DATE="18/Aug/2014"
+TRASH_DATE="19/Oct/2014"
 #
 # }}}
 
 #The MIT License (MIT) {{{
 #
-#Copyright (c) 2013-2014 rcmdnk
+#Copyright (c) 2013 rcmdnk
 #
 #Permission is hereby granted, free of charge, to any person obtaining a copy of
 #this software and associated documentation files (the "Software"), to deal in
@@ -279,7 +279,7 @@ listup () { # List up deleted files/directories {{{
     return 0
   fi
   nwidth=${#ntrash}
-  local i=0
+  local i=$((ntrash-1))
   sed -e '1!G;h;$!d' "$_s_file"|while read line;do
     orig_ifs=$IFS
     IFS=","
