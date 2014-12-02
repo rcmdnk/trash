@@ -125,13 +125,13 @@ _sf_check_args () { # {{{
       "l" ) list=1 ;;
       "b" ) back=1 ;;
       "v" ) verbose=$OPTARG ;;
-      "V" ) echo "$(basename $0) $TRASH_VERSION $TRASH_DATE"; return 0;;
+      "V" ) echo "$(basename "$0") $TRASH_VERSION $TRASH_DATE"; return 0;;
       "h" ) echo "$_s_help"|${PAGER:-less} >/dev/tty;return 0;;
-      * ) echo "Check \"$(basename $0) -h\" for more information" >/dev/tty;return 1;;
+      * ) echo "Check \"$(basename "$0") -h\" for more information" >/dev/tty;return 1;;
 
     esac
   done
-  shift $(($OPTIND - 1))
+  shift $((OPTIND - 1))
   trashes=("$@")
 
   if [ $clean -eq 1 ];then
@@ -167,7 +167,7 @@ _sf_check_args () { # {{{
   fi
 
   # Set today's trash box
-  tboxtoday="$mytbox/`date +%Y%m%d`"
+  tboxtoday="$mytbox/$(date +%Y%m%d)"
   if [ ! -d "$tboxtoday" ];then
     mkdir -p "$tboxtoday"
   fi
@@ -175,16 +175,16 @@ _sf_check_args () { # {{{
   # Iterate on arguments
   for t in "${trashes[@]}";do
     if [ ! -e "$t" ];then
-      echo $1: No such file or directory
+      echo "$1: No such file or directory"
       if [ $force -ne 1 ];then
         return 1
       fi
       continue
     fi
-    trash_size=`du -ms "${t}" |awk '{print $1}'`
-    if [ ${trash_size} -gt ${maxsize} ];then
-      echo $t is larger than $maxsize MB, then I delete it directly
-      rm $rmflag "$t"
+    trash_size=$(du -ms "${t}" |awk '{print $1}')
+    if [ "${trash_size}" -gt "${maxsize}" ];then
+      echo "$t is larger than $maxsize MB, then I delete it directly"
+      rm "$rmflag" "$t"
       continue
     fi
 
@@ -200,8 +200,8 @@ _sf_check_args () { # {{{
       fi
     fi
 
-    local origin_name=`echo $(cd "$(dirname "$t")";pwd -P)/$(basename "$t")`
-    local name=`echo $t | sed -e "s|/$||" | sed -e "s|.*/||"`
+    local origin_name=$(echo $(cd "$(dirname "$t")";pwd -P)/$(basename "$t"))
+    local name=$(echo $t | sed -e "s|/$||" | sed -e "s|.*/||")
     local trash_head="${tboxtoday}/${name}"
     local trash_name="${trash_head}"
     local i=1
@@ -217,10 +217,10 @@ _sf_check_args () { # {{{
     mv "$origin_name" "$trash_name"
     local origin_name_short="${origin_name/#$HOME/~}"
     local trash_name_short="${trash_name/#$HOME/~}"
-    echo $origin_name_short was moved to $trash_name_short >/dev/tty
-    touch $_s_file
+    echo "$origin_name_short was moved to $trash_name_short" >/dev/tty
+    touch "$_s_file"
     cp "$_s_file" "${_s_file}.bak"
-    echo "`date +%Y%m%d-%H:%M`,$origin_name_short,$trash_name_short" > "$_s_file"
+    echo "$(date +%Y%m%d-%H:%M),$origin_name_short,$trash_name_short" > "$_s_file"
     cat "${_s_file}.bak" >> "$_s_file"
     rm -f "${_s_file}.bak"
   done
@@ -228,26 +228,26 @@ _sf_check_args () { # {{{
 
 cleanup () { # Clean up the trash box {{{
   # Cleanup fully
-  if [ $1 -eq 1 ];then
+  if [ "$1" -eq 1 ];then
     rm -rf "$mytbox/*"
     echo -n > "$_s_file"
     return 0
   fi
 
   # Check if trash box exists or not
-  if [ ! -d ${mytbox} ];then
+  if [ ! -d "${mytbox}" ];then
     return 0
   fi
 
   # Clean up trash box
   touch "$_s_file"
-  while [ 1 ];do
-    trash_box_size=`du -ms ${mytbox} |awk '{print $1}'`
-    if [ ${trash_box_size} -gt ${maxboxsize} ];then
-      delete_dir=`ls -tr ${tbox} | head -1`
+  while :;do
+    trash_box_size=$(du -ms "${mytbox}" |awk '{print $1}')
+    if [ "${trash_box_size}" -gt "${maxboxsize}" ];then
+      delete_dir=$(ls -tr "${tbox}" | head -1)
       rm -rf "${mytbox}/${delete_dir}"
       cp "$_s_file" "${_s_file}.bak"
-      grep -v "${delete_dir}.bak" > "$_s_file"
+      grep -v "${delete_dir}" "${_s_file}.bak" > "$_s_file"
       rm -f "${_s_file}.bak"
     else
       break
@@ -255,6 +255,7 @@ cleanup () { # Clean up the trash box {{{
   done
 
   # Clean up trash list
+  cp "$_s_file" "${_s_file}.bak"
   while read line;do
     orig_ifs=$IFS
     IFS=","
@@ -263,18 +264,20 @@ cleanup () { # Clean up the trash box {{{
     trash_name_short=${tinfo[2]}
     trash_name=$(sh -c "echo $trash_name_short") # Expand ~
     if [ ! -e "$trash_name" ];then
-      cp "$_s_file" "${_s_file}.bak"
-      grep -v "${delete_dir}.bak" > "$_s_file"
-      rm -f "$_s_file.bak"
+      cp "${_s_file}.bak" "${_s_file}.bak2"
+      grep -v "$trash_name}" "${_s_file}.bak2" > "${_s_file}.bak"
+      rm -f "${_s_file}.bak2"
     fi
   done < "$_s_file"
+  rm -f "${_s_file}.bak"
   return 0
 } # }}}
 
 listup () { # List up deleted files/directories {{{
   touch "$_s_file"
-  ntrash=$(cat "$_s_file"|wc -l);ntrash=$(echo $ntrash)
-  if [ $ntrash -eq 0 ];then
+  ntrash=$(wc -l < "$_s_file")
+  ntrash=$(echo "$ntrash")
+  if [ "$ntrash" -eq 0 ];then
     echo There is no trash
     return 0
   fi
@@ -285,9 +288,9 @@ listup () { # List up deleted files/directories {{{
     IFS=","
     t=($line)
     IFS=$orig_ifs
-    if [ $verbose -ge 2 ];then
+    if [ "$verbose" -ge 2 ];then
       printf "%${nwidth}d %s %s %s\n" $i "${t[0]}" "${t[1]}" "${t[2]}"
-    elif [ $verbose -eq 1 ];then
+    elif [ "$verbose" -eq 1 ];then
       printf "%${nwidth}d %s %s \n" $i "${t[0]}" "${t[1]}"
     else
       printf "%${nwidth}d %s\n" $i "${t[1]}"
@@ -298,17 +301,17 @@ listup () { # List up deleted files/directories {{{
 
 _sf_set_header () { # {{{
   _s_header=""
-  if [ $_s_noheader = 1 -o $_s_lines -lt 10 ];then
+  if [ "$_s_noheader" = 1 -o "$_s_lines" -lt 10 ];then
     return
   fi
-  if [ $_s_cols -ge 62 ];then
+  if [ "$_s_cols" -ge 62 ];then
     _s_header=" $_s_n trashes in total
  vim like move (j/k/gg/G etc...)
  d(delete), s(show details), q(quit)
  Enter: Select to bring back to the original place, and quit
  h: Select to copy it here (current directory), and quit
  "
-  elif [ $_s_cols -ge 40 ];then
+  elif [ "$_s_cols" -ge 40 ];then
     _s_header=" $_s_n trashes in total
  vim like move (j/k/gg/G etc...)
  d(delete), s(show details), q(quit)
@@ -334,41 +337,41 @@ _sf_show () { # _sf_show [is_last [n_show]] {{{
   fi
   if [ ${#trash} -gt $n_show ];then
     if [ "x$ZSH_VERSION" != "x" ];then
-      trash="${trash[$((${#trash}-$n_show)),-1]}"
+      trash="${trash[$((${#trash}-n_show)),-1]}"
     else
-      trash="${trash: $((${#trash}-$n_show))}"
+      trash="${trash: $((${#trash}-n_show))}"
     fi
   fi
   _s_show="$trash"
-  if [ $verbose -ge 1 ];then
+  if [ "$verbose" -ge 1 ];then
     _s_show="$day $trash"
   fi
 
   # Color search words
   if [ "$_s_search_words" != "" ];then
     local negative=""
-    if [ $is_selected -eq 1 ];then
+    if [ "$is_selected" -eq 1 ];then
       negative=";7"
     fi
-    if [ $_s_search_opt -le 1 ];then
-      if [ $_s_search_opt -eq 0 ];then
+    if [ "$_s_search_opt" -le 1 ];then
+      if [ "$_s_search_opt" -eq 0 ];then
         local ic="i"
       else
         local ic=""
       fi
       local words=(${_s_search_words})
       local w
-      for w in ${words[@]};do
-        _s_show=$(echo $_s_show|perl -pe "s|($w)|\e[31${negative}m\1\e[0${negative}m|g$ic")
+      for w in "${words[@]}";do
+        _s_show=$(echo "$_s_show"|perl -pe "s|($w)|\e[31${negative}m\1\e[0${negative}m|g$ic")
       done
     else
-      if [ $_s_search_opt -eq 2 ];then
+      if [ "$_s_search_opt" -eq 2 ];then
         local ic="i"
       else
         local ic=""
       fi
       w="${_s_search_words}"
-      _s_show=$(echo $_s_show|perl -pe "s|($w)|\e[31${negative}m\1\e[0${negative}m|g$ic")
+      _s_show=$(echo "$_s_show"|perl -pe "s|($w)|\e[31${negative}m\1\e[0${negative}m|g$ic")
     fi
   fi
 } # }}}
@@ -403,7 +406,7 @@ _sf_s () { # {{{
   IFS=$orig_ifs
   local origin_name_short=${tinfo[1]}
   local trash_name_short=${tinfo[2]}
-  _sf_echo "$(_sf_nth $_s_current_n) trash:
+  _sf_echo "$(_sf_nth "$_s_current_n") trash:
   Original file    : $origin_name_short
   File in trash box: $trash_name_short"
 } # }}}
@@ -419,21 +422,21 @@ _sf_search_check () { # {{{
   local tinfo=(${1})
   IFS=$orig_ifs
   local input="${tinfo[1]}"
-  if [ $_s_search_opt -le 1 ];then
-    if [ $_s_search_opt -eq 0 ];then
+  if [ "$_s_search_opt" -le 1 ];then
+    if [ "$_s_search_opt" -eq 0 ];then
       local ic="-i"
     else
       local ic=""
     fi
     local words=(${_s_search_words})
     local w
-    for w in ${words[@]};do
+    for w in "${words[@]}";do
       if ! echo "${input}"| grep $ic -q "${w}";then
         return 1
       fi
     done
   else
-    if [ $_s_search_opt -eq 2 ];then
+    if [ "$_s_search_opt" -eq 2 ];then
       local ic="-i"
     else
       local ic=""
@@ -469,7 +472,7 @@ _sf_execute () { # {{{
   fi
 
   if [ $here -eq 1 ];then
-    target="$(basename $origin_name)"
+    target="$(basename "$origin_name")"
   fi
   # For back, confirm anyways.
   if [ -e "$target" ];then
@@ -480,10 +483,10 @@ _sf_execute () { # {{{
     fi
   fi
   if [ $here -eq 1 ];then
-    echo Copying ${origine_name} from ${trash_name_short}
+    echo "Copying ${origine_name} from ${trash_name_short}"
     cp -r "$trash_name" "$target"
   else
-    echo Bringing ${origine_name} back from ${trash_name_short}
+    echo "Bringing ${origine_name} back from ${trash_name_short}"
     mv "$trash_name" "$target"
     _sf_delete
   fi
