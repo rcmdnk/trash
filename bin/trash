@@ -229,7 +229,8 @@ _sf_check_args () { # {{{
 cleanup () { # Clean up the trash box {{{
   # Cleanup fully
   if [ "$1" -eq 1 ];then
-    rm -rf "$mytbox/*"
+    rm -rf "${mytbox}"/*
+    rm -rf "${mytbox}"/.* 2>/dev/null
     echo -n > "$_s_file"
     return 0
   fi
