@@ -6,8 +6,8 @@
 #
 # Usage: trash [-rficClbVv] [-v <verbose level>] [-t <trash_box>] <file/directory>
 #
-TRASH_VERSION=v0.1.0
-TRASH_DATE="19/Oct/2014"
+TRASH_VERSION=v0.1.3
+TRASH_DATE="02/Feb/2015"
 #
 # }}}
 
@@ -229,8 +229,7 @@ _sf_check_args () { # {{{
 cleanup () { # Clean up the trash box {{{
   # Cleanup fully
   if [ "$1" -eq 1 ];then
-    rm -rf "${mytbox}"/*
-    rm -rf "${mytbox}"/.* 2>/dev/null
+    rm -rf "${mytbox}"
     echo -n > "$_s_file"
     return 0
   fi
