@@ -215,8 +215,8 @@ _sf_check_args () { # {{{
     done
 
     mv "$origin_name" "$trash_name"
-    local origin_name_short="${origin_name/#$HOME/~}"
-    local trash_name_short="${trash_name/#$HOME/~}"
+    local origin_name_short="${origin_name/$HOME/\~}"
+    local trash_name_short="${trash_name/$HOME/\~}"
     echo "$origin_name_short was moved to $trash_name_short" >/dev/tty
     touch "$_s_file"
     cp "$_s_file" "${_s_file}.bak"
@@ -257,7 +257,7 @@ cleanup () { # Clean up the trash box {{{
   # Clean up trash list
   cp "$_s_file" "${_s_file}.bak"
   while read line;do
-    orig_ifs=$IFS
+    local orig_ifs=$IFS
     IFS=","
     tinfo=(${line})
     IFS=$orig_ifs
@@ -275,25 +275,29 @@ cleanup () { # Clean up the trash box {{{
 
 listup () { # List up deleted files/directories {{{
   touch "$_s_file"
-  ntrash=$(wc -l < "$_s_file")
-  ntrash=$(echo "$ntrash")
+  local ntrash=$(echo $(wc -l < "$_s_file"))
   if [ "$ntrash" -eq 0 ];then
     echo There is no trash
     return 0
   fi
-  nwidth=${#ntrash}
+  local nwidth=${#ntrash}
   local i=$((ntrash-1))
   sed -e '1!G;h;$!d' "$_s_file"|while read line;do
-    orig_ifs=$IFS
+    local orig_ifs=$IFS
     IFS=","
-    t=($line)
+    tinfo=($line)
     IFS=$orig_ifs
+    local day=${tinfo[0]}
+    local trash=${tinfo[1]}
+    local dest=${tinfo[2]}
+    trash="${trash/$HOME/\~}"
+    dest="${dest/$HOME/\~}"
     if [ "$verbose" -ge 2 ];then
-      printf "%${nwidth}d %s %s %s\n" $i "${t[0]}" "${t[1]}" "${t[2]}"
+      printf "%${nwidth}d %s %s %s\n" $i "${day}" "${trash}" "${dest}"
     elif [ "$verbose" -eq 1 ];then
-      printf "%${nwidth}d %s %s \n" $i "${t[0]}" "${t[1]}"
+      printf "%${nwidth}d %s %s \n" $i "${day}" "${trash}"
     else
-      printf "%${nwidth}d %s\n" $i "${t[1]}"
+      printf "%${nwidth}d %s\n" $i "${trash}"
     fi
     ((i--))
   done
@@ -331,20 +335,33 @@ _sf_show () { # _sf_show [is_last [n_show]] {{{
   local day=${tinfo[0]}
   local trash=${tinfo[1]}
   local dest=${tinfo[2]}
+  trash="${trash/$HOME/\~}"
+  dest="${dest/$HOME/\~}"
 
-  if [ $verbose -ge 1 ];then
-    n_show=$((n_show-${#day}-1))
-  fi
-  if [ ${#trash} -gt $n_show ];then
-    if [ "x$ZSH_VERSION" != "x" ];then
-      trash="${trash[$((${#trash}-n_show)),-1]}"
-    else
-      trash="${trash: $((${#trash}-n_show))}"
-    fi
-  fi
   _s_show="$trash"
-  if [ "$verbose" -ge 1 ];then
+  if [ $verbose -ge 1 ];then
     _s_show="$day $trash"
+  fi
+  if [ $verbose -ge 2 ];then
+    _s_show="$_s_show $dest"
+  fi
+
+  if [ "${#_s_show}" -gt "$n_show" ];then
+    if [ $_s_showlast -eq 0 ];then
+      if [ "x$ZSH_VERSION" != "x" ];then
+        _s_show="${_s_show[0,$((n_show-1))]}" # need for zsh version < 5
+      else
+        _s_show="${_s_show: 0: $n_show}"
+      fi
+    else
+      if [ "x$ZSH_VERSION" != "x" ];then
+        _s_show="${_s_show[$((${#_s_show}-n_show)),-1]}"
+      else
+        _s_show="${_s_show: $((${#_s_show}-n_show))}"
+      fi
+    fi
+  else
+    _s_show=$(printf "%-${n_show}s" "${_s_show}")
   fi
 
   # Color search words
@@ -400,7 +417,7 @@ Check $(_sf_nth $(($1+1))) trash information in $tlist"
 } # }}}
 
 _sf_s () { # {{{
-  orig_ifs=$IFS
+  local orig_ifs=$IFS
   IFS=","
   local tinfo=(${_s_inputs[$_s_current_n]})
   IFS=$orig_ifs
@@ -417,7 +434,7 @@ _sf_h () { # {{{
 } # }}}
 
 _sf_search_check () { # {{{
-  orig_ifs=$IFS
+  local orig_ifs=$IFS
   IFS=","
   local tinfo=(${1})
   IFS=$orig_ifs
@@ -448,7 +465,7 @@ _sf_search_check () { # {{{
 } # }}}
 
 _sf_execute () { # {{{
-  orig_ifs=$IFS
+  local orig_ifs=$IFS
   IFS=","
   local tinfo=(${_s_inputs[$_s_current_n]})
   IFS=$orig_ifs
