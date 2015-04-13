@@ -184,7 +184,7 @@ _sf_check_args () { # {{{
     trash_size=$(du -ms "${t}" |awk '{print $1}')
     if [ "${trash_size}" -gt "${maxsize}" ];then
       echo "$t is larger than $maxsize MB, then I delete it directly"
-      rm "$rmflag" "$t"
+      rm $rmflag "$t"
       continue
     fi
 
