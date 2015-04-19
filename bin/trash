@@ -215,8 +215,8 @@ _sf_check_args () { # {{{
     done
 
     mv "$origin_name" "$trash_name"
-    local origin_name_short="${origin_name/$HOME/\~}"
-    local trash_name_short="${trash_name/$HOME/\~}"
+    local origin_name_short=$(echo $origin_name|sed "s|^$HOME|\~|")
+    local trash_name_short=$(echo $trash_name|sed "s|^$HOME|\~|")
     echo "$origin_name_short was moved to $trash_name_short" >/dev/tty
     touch "$_s_file"
     cp "$_s_file" "${_s_file}.bak"
@@ -290,8 +290,8 @@ listup () { # List up deleted files/directories {{{
     local day=${tinfo[0]}
     local trash=${tinfo[1]}
     local dest=${tinfo[2]}
-    trash="${trash/$HOME/\~}"
-    dest="${dest/$HOME/\~}"
+    trash=$(echo $trash|sed "s|^$HOME|\~|")
+    dest=$(echo $dest|sed "s|^$HOME|\~|")
     if [ "$verbose" -ge 2 ];then
       printf "%${nwidth}d %s %s %s\n" $i "${day}" "${trash}" "${dest}"
     elif [ "$verbose" -eq 1 ];then
@@ -335,8 +335,8 @@ _sf_show () { # _sf_show [is_last [n_show]] {{{
   local day=${tinfo[0]}
   local trash=${tinfo[1]}
   local dest=${tinfo[2]}
-  trash="${trash/$HOME/\~}"
-  dest="${dest/$HOME/\~}"
+  trash=$(echo $trash|sed "s|^$HOME|\~|")
+  dest=$(echo $dest|sed "s|^$HOME|\~|")
 
   _s_show="$trash"
   if [ $verbose -ge 1 ];then
