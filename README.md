@@ -16,7 +16,7 @@ If you install the script directly, please install sentaku or use
 [standalone version](https://github.com/rcmdnk/trash/tree/standalone)
 (standalone version could be obsolete).
 
-# Installation
+## Installation
 
 On Mac, you can install scripts by [Homebrew](https://github.com/mxcl/homebrew):
 
@@ -55,7 +55,7 @@ Or, simply download the script and set where you like.
 :warning: Install [sentaku](https://github.com/rcmdnk/sentaku), too
 if you download directly.
 
-# Usage
+## Usage
 
     # Help
     Usage: trash [-rficClbVv] [-v <verbose level>] [-t <trash_box>] <file/directory>
@@ -105,15 +105,15 @@ if you download directly.
         # Trashes larger than MAXTRASHBOXSIZE will be removed by 'rm' directly
     "
 
-# Tips
+## Tips
 
-## Alias
+### Alias
 
 Following alias is useful to use trash:
 
     alias del="trash -r"
 
-## Clean up
+### Clean up
 
 You may be want to clean up trash box regularly to keep the box not too much.
 
@@ -133,7 +133,7 @@ In addition, you can empty your trash box for trash by
 
     $ trash -C
 
-# References
+## References
 
 * [rm -rfのプロテクト、コマンドラインでのゴミ箱](http://rcmdnk.github.io/blog/2013/04/23/computer-bash-linux-mac/)
 
