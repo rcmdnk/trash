@@ -6,8 +6,8 @@
 #
 # Usage: trash [-rficClbVv] [-v <verbose level>] [-t <trash_box>] <file/directory>
 #
-TRASH_VERSION=v0.1.5
-TRASH_DATE="13/Apr/2015"
+TRASH_VERSION=v0.1.6
+TRASH_DATE="26/Aug/2015"
 #
 # }}}
 
@@ -304,19 +304,18 @@ listup () { # List up deleted files/directories {{{
 } # }}}
 
 _sf_set_header () { # {{{
-  _s_header=""
+  _s_header="\e[43;30m$_s_n values in total\e[0m "
   if [ "$_s_noheader" = 1 -o "$_s_lines" -lt 10 ];then
     return
   fi
   if [ "$_s_cols" -ge 62 ];then
-    _s_header=" $_s_n trashes in total
+    _s_header="$_s_header
  vim like move (j/k/gg/G etc...)
  d(delete), s(show details), q(quit)
  Enter: Select to bring back to the original place, and quit
- h: Select to copy it here (current directory), and quit
- "
+ h: Select to copy it here (current directory), and quit"
   elif [ "$_s_cols" -ge 40 ];then
-    _s_header=" $_s_n trashes in total
+    _s_header="$_s_header
  vim like move (j/k/gg/G etc...)
  d(delete), s(show details), q(quit)
  Enter: Bring it back
