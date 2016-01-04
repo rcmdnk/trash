@@ -6,8 +6,8 @@
 #
 # Usage: trash [-rficClbVv] [-v <verbose level>] [-t <trash_box>] <file/directory>
 #
-TRASH_VERSION=v0.1.6
-TRASH_DATE="26/Aug/2015"
+TRASH_VERSION=v0.2.0
+TRASH_DATE="4/Jan/2016"
 #
 # }}}
 
@@ -51,7 +51,7 @@ _SENTAKU_SEPARATOR=$'\n'
 _sf_initialize_user () { # {{{
   # Default variables
   rdir=0
-  force=1
+  force=0
   confirm=0
   tbox=${TRASHBOX:-$HOME/.Trash}
   # Use more one depth directory to distinguish from other trash
