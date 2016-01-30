@@ -259,6 +259,7 @@ cleanup () { # Clean up the trash box {{{
   while read line;do
     local orig_ifs=$IFS
     IFS=","
+    local -a tinfo
     tinfo=(${line})
     IFS=$orig_ifs
     trash_name_short=${tinfo[2]}
@@ -285,6 +286,7 @@ listup () { # List up deleted files/directories {{{
   sed -e '1!G;h;$!d' "$_s_file"|while read line;do
     local orig_ifs=$IFS
     IFS=","
+    local -a tinfo
     tinfo=($line)
     IFS=$orig_ifs
     local day=${tinfo[0]}
@@ -329,7 +331,8 @@ _sf_show () { # _sf_show [is_last [n_show]] {{{
 
   local orig_ifs=$IFS
   IFS=","
-  local tinfo=($_s_show)
+  local -a tinfo
+  tinfo=($_s_show)
   IFS=$orig_ifs
   local day=${tinfo[0]}
   local trash=${tinfo[1]}
@@ -375,7 +378,8 @@ _sf_show () { # _sf_show [is_last [n_show]] {{{
       else
         local ic=""
       fi
-      local words=(${_s_search_words})
+      local -a words
+      words=(${_s_search_words})
       local w
       for w in "${words[@]}";do
         _s_show=$(echo "$_s_show"|perl -pe "s|($w)|\e[31${negative}m\1\e[0${negative}m|g$ic")
@@ -396,7 +400,8 @@ _sf_d () { # {{{
   local n=$_s_current_n
   local orig_ifs=$IFS
   IFS=","
-  local tinfo=(${_s_inputs[$n]})
+  local -a tinfo
+  tinfo=(${_s_inputs[$n]})
   IFS=$orig_ifs
   local origin_name_short=${tinfo[1]}
   local trash_name_short=${tinfo[2]}
@@ -418,7 +423,8 @@ Check $(_sf_nth $(($1+1))) trash information in $tlist"
 _sf_s () { # {{{
   local orig_ifs=$IFS
   IFS=","
-  local tinfo=(${_s_inputs[$_s_current_n]})
+  local -a tinfo
+  tinfo=(${_s_inputs[$_s_current_n]})
   IFS=$orig_ifs
   local origin_name_short=${tinfo[1]}
   local trash_name_short=${tinfo[2]}
@@ -435,7 +441,8 @@ _sf_h () { # {{{
 _sf_search_check () { # {{{
   local orig_ifs=$IFS
   IFS=","
-  local tinfo=(${1})
+  local -a tinfo
+  tinfo=(${1})
   IFS=$orig_ifs
   local input="${tinfo[1]}"
   if [ "$_s_search_opt" -le 1 ];then
@@ -444,7 +451,8 @@ _sf_search_check () { # {{{
     else
       local ic=""
     fi
-    local words=(${_s_search_words})
+    local -a words
+    words=(${_s_search_words})
     local w
     for w in "${words[@]}";do
       if ! echo "${input}"| grep $ic -q "${w}";then
@@ -466,7 +474,8 @@ _sf_search_check () { # {{{
 _sf_execute () { # {{{
   local orig_ifs=$IFS
   IFS=","
-  local tinfo=(${_s_inputs[$_s_current_n]})
+  local -a tinfo
+  tinfo=(${_s_inputs[$_s_current_n]})
   IFS=$orig_ifs
   local origin_name_short=${tinfo[1]}
   local trash_name_short=${tinfo[2]}
