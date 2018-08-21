@@ -428,9 +428,26 @@ _sf_s () { # {{{
   IFS=$orig_ifs
   local origin_name_short=${tinfo[1]}
   local trash_name_short=${tinfo[2]}
-  _sf_echo "$(_sf_nth "$_s_current_n") trash:
+  local trash_name=$(eval echo "$trash_name_short")
+  local filetest=$(file --mime "$trash_name")
+  if echo "$filetest"|grep -q ascii;then
+    local content="$(cat "$trash_name")"
+  elif echo "$filetest"|grep -q directory;then
+    local content="$trash_name_short is a directory"
+  elif echo "$filetest"|grep -q binary;then
+    local content="$trash_name_short is a binary file"
+  elif echo "$filetest"|grep -q "No such file or directory";then
+    local content="$trash_name_short doesn't exist"
+  else
+    local content="$trash_name_short is something else"
+  fi
+  _sf_clear
+  echo "$(_sf_nth "$_s_current_n") trash:
   Original file    : $origin_name_short
-  File in trash box: $trash_name_short"
+  File in trash box: $trash_name_short
+====================
+$content" | less
+  _sf_printall
 } # }}}
 
 _sf_h () { # {{{
