@@ -263,7 +263,7 @@ cleanup () { # Clean up the trash box {{{
     tinfo=(${line})
     IFS=$orig_ifs
     trash_name_short=${tinfo[2]}
-    trash_name=$(sh -c "echo $trash_name_short") # Expand ~
+    trash_name=$(eval echo "$trash_name_short") # Expand ~
     if [ ! -e "$trash_name" ];then
       cp "${_s_file}.bak" "${_s_file}.bak2"
       grep -v "$trash_name}" "${_s_file}.bak2" > "${_s_file}.bak"
@@ -405,11 +405,11 @@ _sf_d () { # {{{
   IFS=$orig_ifs
   local origin_name_short=${tinfo[1]}
   local trash_name_short=${tinfo[2]}
-  local origin_name=$(sh -c "echo $origin_name_short") # Expand ~
-  local trash_name=$(sh -c "echo $trash_name_short") # Expand ~
+  local origin_name=$(eval echo "$origin_name_short") # Expand ~
+  local trash_name=$(eval echo "$trash_name_short") # Expand ~
   if [ "$origin_name" = "" ] || [ "$trash_name" = "" ];then
-    _sf_echo "$tlist might be corrupted
-Check $(_sf_nth $(($1+1))) trash information in $tlist"
+    _sf_echo "$_SENTAKU_INPUT_FILE might be corrupted
+Check $(_sf_nth $(($1+1))) trash information in $_SENTAKU_INPUT_FILE"
     _sf_quit 1
     return 1
   elif [ ! -e "$trash_name" ];then
@@ -496,13 +496,13 @@ _sf_execute () { # {{{
   IFS=$orig_ifs
   local origin_name_short=${tinfo[1]}
   local trash_name_short=${tinfo[2]}
-  local origin_name=$(sh -c "echo $origin_name_short") # Expand ~
-  local trash_name=$(sh -c "echo $trash_name_short") # Expand ~
+  local origin_name=$(eval echo "$origin_name_short") # Expand ~
+  local trash_name=$(eval echo "$trash_name_short") # Expand ~
   local target="$origin_name"
 
   # Check trash information
   if [ "$origin_name" = "" ] || [ "$trash_name" = "" ];then
-    echo "$tlist might be corrupted" >/dev/tty
+    echo "$_SENTAKU_INPUT_FILE might be corrupted" >/dev/tty
     echo "$(nth $(($1+1))) trash information was corrupted" >/dev/tty
     echo "removing..." >/dev/tty
     _sf_delete
