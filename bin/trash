@@ -6,8 +6,8 @@
 #
 # Usage: trash [-rficClbVv] [-v <verbose level>] [-t <trash_box>] <file/directory>
 #
-TRASH_VERSION=v0.2.1
-TRASH_DATE="31/Jan/2016"
+TRASH_VERSION=v0.2.2
+TRASH_DATE="21/Aug/2018"
 #
 # }}}
 
@@ -68,8 +68,7 @@ _sf_initialize_user () { # {{{
   trashes=()
 
   # Help
-  _s_help="
-Usage: trash [-rficClbV] [-v <verbose level>] [-t <trash_box>] <file/directory>
+  _s_help="Usage: trash [-rficClbV] [-v <verbose level>] [-t <trash_box>] <file/directory>
 
 Arguments:
    -r              Remove directory (default: $rdir)
@@ -126,7 +125,7 @@ _sf_check_args () { # {{{
       "b" ) back=1 ;;
       "v" ) verbose=$OPTARG ;;
       "V" ) echo "$(basename "$0") $TRASH_VERSION $TRASH_DATE"; return 0;;
-      "h" ) echo "$_s_help"|${PAGER:-less} >/dev/tty;return 0;;
+      "h" ) _sf_help;return 0;;
       * ) echo "Check \"$(basename "$0") -h\" for more information" >/dev/tty;return 1;;
 
     esac
