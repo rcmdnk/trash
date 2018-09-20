@@ -429,10 +429,11 @@ _sf_s () { # {{{
   local trash_name_short=${tinfo[2]}
   local trash_name=$(eval echo "$trash_name_short")
   local filetest=$(file --mime "$trash_name")
-  if [[ "$filetest" = *ascii* ]];then
+  if [[ "$filetest" = *text* ]];then
     local content="$(cat "$trash_name")"
   elif [[ "$filetest" = *directory* ]];then
-    local content="$trash_name_short is a directory"
+    local content="$trash_name_short is a directory, contents:
+$(ls "$trash_name")"
   elif [[ "$filetest" = *binary* ]];then
     local content="$trash_name_short is a binary file"
   elif [[ "$filetest" = *"No such file or directory"* ]];then
@@ -444,8 +445,10 @@ _sf_s () { # {{{
   echo "$(_sf_nth "$_s_current_n") trash:
   Original file    : $origin_name_short
   File in trash box: $trash_name_short
+  $(ls -ltd "$trash_name")
 ====================
-$content" | less
+$content" | ${PAGER:-less}
+  _sf_wait
   _sf_printall
 } # }}}
 
