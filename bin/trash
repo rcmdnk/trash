@@ -124,7 +124,7 @@ _sf_check_args () { # {{{
       "l" ) list=1 ;;
       "b" ) back=1 ;;
       "v" ) verbose=$OPTARG ;;
-      "V" ) echo "$(basename "$0") $TRASH_VERSION $TRASH_DATE"; return 0;;
+      "V" ) echo "${0##*/} $TRASH_VERSION $TRASH_DATE"; return 0;;
       "h" ) _sf_help;return 0;;
       * ) echo "Check \"${0##*/} -h\" for more information" >/dev/tty;return 1;;
 
@@ -180,6 +180,7 @@ _sf_check_args () { # {{{
       fi
       continue
     fi
+    t=${t%/}
     trash_size=$(du -ms "${t}" |awk '{print $1}')
     if [[ "${trash_size}" -gt "${maxsize}" ]];then
       echo "$t is larger than $maxsize MB, then I delete it directly"
@@ -198,8 +199,17 @@ _sf_check_args () { # {{{
         continue
       fi
     fi
+    if [[ "$t" = */* ]];then
+      local curdir="$PWD"
+      local dir="${t%/*}"
+      cd "$dir"
+      dir="$PWD"
+      cd "$curdir"
+    else
+      dir="$PWD"
+    fi
 
-    local origin_name=$(echo $(cd "$(dirname "$t")";pwd -P)/$(basename "$t"))
+    local origin_name="$dir/${t##*/}"
     local name=$(echo $t | sed -e "s|/$||" | sed -e "s|.*/||")
     local trash_head="${tboxtoday}/${name}"
     local trash_name="${trash_head}"
@@ -483,10 +493,10 @@ _sf_execute () { # {{{
   local -a tinfo
   tinfo=(${_s_inputs[$_s_current_n]})
   IFS=$orig_ifs
-  local origin_name_short=${tinfo[1]}
-  local trash_name_short=${tinfo[2]}
+  local origin_name_short=${tinfo[1]%/} # remove trailing /
+  local trash_name_short=${tinfo[2]%/}
   local origin_name=$(eval echo "$origin_name_short") # Expand ~
-  local trash_name=$(eval echo "$trash_name_short") # Expand ~
+  local trash_name=$(eval echo "$trash_name_short")
   local target="$origin_name"
 
   # Check trash information
@@ -503,7 +513,7 @@ _sf_execute () { # {{{
   fi
 
   if [[ $here -eq 1 ]];then
-    target="$(basename "$origin_name")"
+    target="${origin_name##*/}"
   fi
   # For back, confirm anyways.
   if [[ -e "$target" ]];then
