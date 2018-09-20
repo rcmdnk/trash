@@ -347,17 +347,9 @@ _sf_show () { # _sf_show [is_last [n_show]] {{{
 
   if [[ "${#_s_show}" -gt "$n_show" ]];then
     if [ "$_s_showlast" -eq 0 ];then
-      if [[ -n "$ZSH_VERSION" ]];then
-        _s_show="${_s_show[0,$((n_show-1))]}" # need for zsh version < 5
-      else
-        _s_show="${_s_show: 0: $n_show}"
-      fi
+      _s_show="${_s_show: 0: $n_show}"
     else
-      if [[ -n "$ZSH_VERSION" ]];then
-        _s_show="${_s_show[$((${#_s_show}-n_show)),-1]}"
-      else
-        _s_show="${_s_show: $((${#_s_show}-n_show))}"
-      fi
+      _s_show="${_s_show: $((${#_s_show}-n_show))}"
     fi
   else
     _s_show=$(printf "%-${n_show}s" "${_s_show}")
