@@ -37,7 +37,7 @@ TRASH_DATE="21/Aug/2018"
 if type sentaku >& /dev/null;then
   . sentaku -n
 else
-  echo "Install sentaku (https://github.com/rcmdnk/sentaku) first."
+  echo "Install sentaku (https://github.com/rcmdnk/sentaku) first"
   exit 1
 fi
 # }}}
@@ -126,75 +126,75 @@ _sf_check_args () { # {{{
       "v" ) verbose=$OPTARG ;;
       "V" ) echo "$(basename "$0") $TRASH_VERSION $TRASH_DATE"; return 0;;
       "h" ) _sf_help;return 0;;
-      * ) echo "Check \"$(basename "$0") -h\" for more information" >/dev/tty;return 1;;
+      * ) echo "Check \"${0##*/} -h\" for more information" >/dev/tty;return 1;;
 
     esac
   done
   shift $((OPTIND - 1))
   trashes=("$@")
 
-  if [ $clean -eq 1 ];then
+  if [[ $clean -eq 1 ]];then
     cleanup $clean_full
     return $?
   fi
 
-  if [ $list -eq 1 ];then
+  if [[ $list -eq 1 ]];then
     listup
     return $?
   fi
 
-  if [ $back -eq 1 ];then
+  if [[ $back -eq 1 ]];then
     _s_continue=1
     return 0
   fi
 
   # Check trashes
-  if [ "${#trashes[@]}" -lt 1 ];then
+  if [[ "${#trashes[@]}" -lt 1 ]];then
     echo "No file/directory is given." >/dev/tty
     echo "$_s_help" >/dev/tty
     return 1
   fi
 
   # Set rm flags
-  if [ $force -eq 1 ];then
+  if [[ $force -eq 1 ]];then
     rmflag="-f"
   else
     rmflag="-i"
   fi
-  if [ $rdir -eq 1 ];then
+  if [[ $rdir -eq 1 ]];then
     rmflag="$rmflag -r"
   fi
 
   # Set today's trash box
   tboxtoday="$mytbox/$(date +%Y%m%d)"
-  if [ ! -d "$tboxtoday" ];then
+  if [[ ! -d "$tboxtoday" ]];then
     mkdir -p "$tboxtoday"
   fi
 
   # Iterate on arguments
   for t in "${trashes[@]}";do
-    if [ ! -e "$t" ];then
+    if [[ ! -e "$t" ]];then
       echo "$1: No such file or directory"
-      if [ $force -ne 1 ];then
+      if [[ $force -ne 1 ]];then
         return 1
       fi
       continue
     fi
     trash_size=$(du -ms "${t}" |awk '{print $1}')
-    if [ "${trash_size}" -gt "${maxsize}" ];then
+    if [[ "${trash_size}" -gt "${maxsize}" ]];then
       echo "$t is larger than $maxsize MB, then I delete it directly"
       rm $rmflag "$t"
       continue
     fi
 
-    if [ -d "$t" ] && [ $rdir -ne 1 ];then
+    if [[ -d "$t" && $rdir -ne 1 ]];then
       echo $t: is a directory, use "-r" for directory
       continue
     fi
 
-    if [ $confirm -eq 1 ];then
+    if [[ $confirm -eq 1 ]];then
       _sf_yn "remove ${t}?"
-      if [ $? -ne 0 ];then
+      if [[ $? -ne 0 ]];then
         continue
       fi
     fi
@@ -205,7 +205,7 @@ _sf_check_args () { # {{{
     local trash_name="${trash_head}"
     local i=1
     while true;do
-      if [ -e "${trash_name}" ];then
+      if [[ -e "${trash_name}" ]];then
         trash_name="${trash_head}.${i}"
         ((i++))
       else
@@ -227,14 +227,14 @@ _sf_check_args () { # {{{
 
 cleanup () { # Clean up the trash box {{{
   # Cleanup fully
-  if [ "$1" -eq 1 ];then
+  if [[ "$1" -eq 1 ]];then
     rm -rf "${mytbox}"
     echo -n > "$_s_file"
     return 0
   fi
 
   # Check if trash box exists or not
-  if [ ! -d "${mytbox}" ];then
+  if [[ ! -d "${mytbox}" ]];then
     return 0
   fi
 
@@ -263,7 +263,7 @@ cleanup () { # Clean up the trash box {{{
     IFS=$orig_ifs
     trash_name_short=${tinfo[2]}
     trash_name=$(eval echo "$trash_name_short") # Expand ~
-    if [ ! -e "$trash_name" ];then
+    if [[ ! -e "$trash_name" ]];then
       cp "${_s_file}.bak" "${_s_file}.bak2"
       grep -v "$trash_name}" "${_s_file}.bak2" > "${_s_file}.bak"
       rm -f "${_s_file}.bak2"
@@ -276,7 +276,7 @@ cleanup () { # Clean up the trash box {{{
 listup () { # List up deleted files/directories {{{
   touch "$_s_file"
   local ntrash=$(echo $(wc -l < "$_s_file"))
-  if [ "$ntrash" -eq 0 ];then
+  if [[ "$ntrash" -eq 0 ]];then
     echo There is no trash
     return 0
   fi
@@ -306,7 +306,7 @@ listup () { # List up deleted files/directories {{{
 
 _sf_set_header () { # {{{
   _s_header="\e[43;30m$_s_n values in total\e[0m "
-  if [ "$_s_noheader" = 1 -o "$_s_lines" -lt 10 ];then
+  if [[ "$_s_noheader" = 1 || "$_s_lines" -lt 10 ]];then
     return
   fi
   if [ "$_s_cols" -ge 62 ];then
@@ -336,26 +336,24 @@ _sf_show () { # _sf_show [is_last [n_show]] {{{
   local day=${tinfo[0]}
   local trash=${tinfo[1]}
   local dest=${tinfo[2]}
-  trash=$(echo $trash|sed "s|^$HOME|\~|")
-  dest=$(echo $dest|sed "s|^$HOME|\~|")
 
   _s_show="$trash"
-  if [ $verbose -ge 1 ];then
+  if [[ $verbose -ge 1 ]];then
     _s_show="$day $trash"
   fi
-  if [ $verbose -ge 2 ];then
+  if [[ $verbose -ge 2 ]];then
     _s_show="$_s_show $dest"
   fi
 
-  if [ "${#_s_show}" -gt "$n_show" ];then
-    if [ $_s_showlast -eq 0 ];then
-      if [ "x$ZSH_VERSION" != "x" ];then
+  if [[ "${#_s_show}" -gt "$n_show" ]];then
+    if [ "$_s_showlast" -eq 0 ];then
+      if [[ -n "$ZSH_VERSION" ]];then
         _s_show="${_s_show[0,$((n_show-1))]}" # need for zsh version < 5
       else
         _s_show="${_s_show: 0: $n_show}"
       fi
     else
-      if [ "x$ZSH_VERSION" != "x" ];then
+      if [[ -n "$ZSH_VERSION" ]];then
         _s_show="${_s_show[$((${#_s_show}-n_show)),-1]}"
       else
         _s_show="${_s_show: $((${#_s_show}-n_show))}"
@@ -366,13 +364,13 @@ _sf_show () { # _sf_show [is_last [n_show]] {{{
   fi
 
   # Color search words
-  if [ "$_s_search_words" != "" ];then
+  if [[ -n "$_s_search_words" ]];then
     local negative=""
-    if [ "$is_selected" -eq 1 ];then
+    if [[ "$is_selected" -eq 1 ]];then
       negative=";7"
     fi
-    if [ "$_s_search_opt" -le 1 ];then
-      if [ "$_s_search_opt" -eq 0 ];then
+    if [[ "$_s_search_opt" -le 1 ]];then
+      if [[ "$_s_search_opt" -eq 0 ]];then
         local ic="i"
       else
         local ic=""
@@ -384,7 +382,7 @@ _sf_show () { # _sf_show [is_last [n_show]] {{{
         _s_show=$(echo "$_s_show"|perl -pe "s|($w)|\e[31${negative}m\1\e[0${negative}m|g$ic")
       done
     else
-      if [ "$_s_search_opt" -eq 2 ];then
+      if [[ "$_s_search_opt" -eq 2 ]];then
         local ic="i"
       else
         local ic=""
@@ -406,12 +404,12 @@ _sf_d () { # {{{
   local trash_name_short=${tinfo[2]}
   local origin_name=$(eval echo "$origin_name_short") # Expand ~
   local trash_name=$(eval echo "$trash_name_short") # Expand ~
-  if [ "$origin_name" = "" ] || [ "$trash_name" = "" ];then
+  if [[ -z "$origin_name" || -z "$trash_name" ]];then
     _sf_echo "$_SENTAKU_INPUT_FILE might be corrupted
 Check $(_sf_nth $(($1+1))) trash information in $_SENTAKU_INPUT_FILE"
     _sf_quit 1
     return 1
-  elif [ ! -e "$trash_name" ];then
+  elif [[ ! -e "$trash_name" ]];then
     _sf_echo "Trash of $origin_name_short ($trash_name_short) does not exist in $tbox, remove from the list"
   fi
   rm -rf "$trash_name"
@@ -429,13 +427,13 @@ _sf_s () { # {{{
   local trash_name_short=${tinfo[2]}
   local trash_name=$(eval echo "$trash_name_short")
   local filetest=$(file --mime "$trash_name")
-  if echo "$filetest"|grep -q ascii;then
+  if [[ "$filetest" = *ascii* ]];then
     local content="$(cat "$trash_name")"
-  elif echo "$filetest"|grep -q directory;then
+  elif [[ "$filetest" = *directory* ]];then
     local content="$trash_name_short is a directory"
-  elif echo "$filetest"|grep -q binary;then
+  elif [[ "$filetest" = *binary* ]];then
     local content="$trash_name_short is a binary file"
-  elif echo "$filetest"|grep -q "No such file or directory";then
+  elif [[ "$filetest" = *"No such file or directory"* ]];then
     local content="$trash_name_short doesn't exist"
   else
     local content="$trash_name_short is something else"
@@ -461,8 +459,8 @@ _sf_search_check () { # {{{
   tinfo=(${1})
   IFS=$orig_ifs
   local input="${tinfo[1]}"
-  if [ "$_s_search_opt" -le 1 ];then
-    if [ "$_s_search_opt" -eq 0 ];then
+  if [[ "$_s_search_opt" -le 1 ]];then
+    if [[ "$_s_search_opt" -eq 0 ]];then
       local ic="-i"
     else
       local ic=""
@@ -476,7 +474,7 @@ _sf_search_check () { # {{{
       fi
     done
   else
-    if [ "$_s_search_opt" -eq 2 ];then
+    if [[ "$_s_search_opt" -eq 2 ]];then
       local ic="-i"
     else
       local ic=""
@@ -500,34 +498,34 @@ _sf_execute () { # {{{
   local target="$origin_name"
 
   # Check trash information
-  if [ "$origin_name" = "" ] || [ "$trash_name" = "" ];then
+  if [[ -z "$origin_name"  || -z "$trash_name" ]];then
     echo "$_SENTAKU_INPUT_FILE might be corrupted" >/dev/tty
     echo "$(nth $(($1+1))) trash information was corrupted" >/dev/tty
     echo "removing..." >/dev/tty
     _sf_delete
     return 1
-  elif [ ! -e "$trash_name" ];then
+  elif [[ ! -e "$trash_name" ]];then
     echo "$trash_name_short doesn't exist, remove from the list" >/dev/tty
     _sf_delete
     return 1
   fi
 
-  if [ $here -eq 1 ];then
+  if [[ $here -eq 1 ]];then
     target="$(basename "$origin_name")"
   fi
   # For back, confirm anyways.
-  if [ -e "$target" ];then
+  if [[ -e "$target" ]];then
     _sf_yn "$target exists. Do you want to overwrite from trash box?"
     local ret=$?
-    if [ $ret -ne 0 ];then
+    if [[ $ret -ne 0 ]];then
       return 0
     fi
   fi
-  if [ $here -eq 1 ];then
-    echo "Copying ${origine_name} from ${trash_name_short}"
+  if [[ $here -eq 1 ]];then
+    echo "Copying ${target} from ${trash_name_short} here"
     cp -r "$trash_name" "$target"
   else
-    echo "Bringing ${origine_name} back from ${trash_name_short}"
+    echo "Bringing ${target} back from ${trash_name_short}"
     mv "$trash_name" "$target"
     _sf_delete
   fi
