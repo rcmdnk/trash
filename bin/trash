@@ -241,11 +241,11 @@ parse_trash_info () { # Parse trash information from trash list
   local -a tinfo
   local orig_ifs=$IFS
   IFS=","
-  tinfo=("$1")
+  tinfo=($1)
   IFS=$orig_ifs
-  local date=${tinfo[0]}
-  local original_name=${tinfo[1]%/}
-  local trash_name=${tinfo[2]%/}
+  date=${tinfo[0]}
+  original_name=${tinfo[1]%/}
+  trash_name=${tinfo[2]%/}
 } # }}}
 
 cleanup () { # Clean up the trash box {{{
@@ -336,6 +336,7 @@ _sf_show () { # _sf_show [is_last [n_show]] {{{
   local is_last=1
   local n_show=${2:-$_s_cols}
 
+  parse_trash_info "$_s_show"
   _s_show="$original_name"
   if [[ $verbose -ge 1 ]];then
     _s_show="$date $original_name"
