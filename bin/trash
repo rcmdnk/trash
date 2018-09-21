@@ -67,6 +67,9 @@ _sf_initialize_user () { # {{{
   here=0
   trashes=()
 
+  # Modify sentaku variables
+  _s_delete=1
+
   # Help
   _s_help="Usage: trash [-rficClbV] [-v <verbose level>] [-t <trash_box>] <file/directory>
 
@@ -343,13 +346,13 @@ _sf_show () { # _sf_show [is_last [n_show]] {{{
   local -a tinfo
   tinfo=($_s_show)
   IFS=$orig_ifs
-  local day=${tinfo[0]}
+  local date=${tinfo[0]/-/ }
   local trash=${tinfo[1]}
   local dest=${tinfo[2]}
 
   _s_show="$trash"
   if [[ $verbose -ge 1 ]];then
-    _s_show="$day $trash"
+    _s_show="$date $trash"
   fi
   if [[ $verbose -ge 2 ]];then
     _s_show="$_s_show $dest"
@@ -412,11 +415,10 @@ Check $(_sf_nth $(($1+1))) trash information in $_SENTAKU_INPUT_FILE"
     _sf_quit 1
     return 1
   elif [[ ! -e "$trash_name" ]];then
-    _sf_echo "Trash of $origin_name_short ($trash_name_short) does not exist in $tbox, remove from the list"
+    _sf_echo "$origin_name_short ($trash_name_short) does not exist in $tbox, remove from the list"
   fi
   rm -rf "$trash_name"
-
-  _sf_delete
+  _sf_rm_del
 } # }}}
 
 _sf_s () { # {{{
@@ -425,27 +427,23 @@ _sf_s () { # {{{
   local -a tinfo
   tinfo=(${_s_inputs[$_s_current_n]})
   IFS=$orig_ifs
+  local date=${tinfo[0]/-/ }
   local origin_name_short=${tinfo[1]}
   local trash_name_short=${tinfo[2]}
   local trash_name=$(eval echo "$trash_name_short")
   local filetest=$(file --mime "$trash_name")
-  if [[ "$filetest" = *text* ]];then
-    local content="$(cat "$trash_name")"
-  elif [[ "$filetest" = *directory* ]];then
-    local content="$trash_name_short is a directory, contents:
-$(ls "$trash_name")"
-  elif [[ "$filetest" = *binary* ]];then
-    local content="$trash_name_short is a binary file"
-  elif [[ "$filetest" = *"No such file or directory"* ]];then
-    local content="$trash_name_short doesn't exist"
-  else
-    local content="$trash_name_short is something else"
-  fi
+  case "$filetest" in
+    *"No such file or directory"*)_sf_d;return;;
+    *text*)local content="$(cat "$trash_name")";;
+    *directory*)local content="$trash_name_short is a directory, contents:
+$(ls "$trash_name")";;
+    *binary*)local content="$trash_name_short is a binary file";;
+    *)local content="$trash_name_short is something else";;
+  esac
   _sf_clear
-  echo "$(_sf_nth "$_s_current_n") trash:
+  echo "$(_sf_nth "$_s_current_n") trash: $date
   Original file    : $origin_name_short
   File in trash box: $trash_name_short
-  $(ls -ltd "$trash_name")
 ====================
 $content" | ${PAGER:-less}
   _sf_wait
