@@ -6,8 +6,8 @@
 #
 # Usage: trash [-rficClbVv] [-v <verbose level>] [-t <trash_box>] <file/directory>
 #
-TRASH_VERSION=v0.2.3
-TRASH_DATE="20/Sep/2018"
+TRASH_VERSION=v0.2.4
+TRASH_DATE="21/Sep/2018"
 #
 # }}}
 
