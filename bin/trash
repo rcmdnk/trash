@@ -212,13 +212,14 @@ _sf_check_args () { # {{{
       dir="$PWD"
     fi
 
-    local origin_name="$dir/${t##*/}"
-    local name=$(echo $t | sed -e "s|/$||" | sed -e "s|.*/||")
-    local trash_head="${tboxtoday}/${name}"
-    local trash_name="${trash_head}"
+    local name=${t%/}
+    name=${t##*/}
+    local original_name="$dir/$name"
+    local trash_head="$tboxtoday/$name"
+    local trash_name="$trash_head"
     local i=1
     while true;do
-      if [[ -e "${trash_name}" ]];then
+      if eval [[ -e "$trash_name" ]];then
         trash_name="${trash_head}.${i}"
         ((i++))
       else
@@ -226,16 +227,25 @@ _sf_check_args () { # {{{
       fi
     done
 
-    mv "$origin_name" "$trash_name"
-    local origin_name_short=$(echo $origin_name|sed "s|^$HOME|\~|")
-    local trash_name_short=$(echo $trash_name|sed "s|^$HOME|\~|")
-    echo "$origin_name_short was moved to $trash_name_short" >/dev/tty
+    mv "$original_name" "$trash_name"
+    echo "$original_name was moved to $trash_name" >/dev/tty
     touch "$_s_file"
     cp "$_s_file" "${_s_file}.bak"
-    echo "$(date +%Y%m%d-%H:%M),$origin_name_short,$trash_name_short" > "$_s_file"
+    echo "$(date +%Y%m%d-%H:%M),$original_name,$trash_name" > "$_s_file"
     cat "${_s_file}.bak" >> "$_s_file"
     rm -f "${_s_file}.bak"
   done
+} # }}}
+
+parse_trash_info () { # Parse trash information from trash list
+  local -a tinfo
+  local orig_ifs=$IFS
+  IFS=","
+  tinfo=("$1")
+  IFS=$orig_ifs
+  local date=${tinfo[0]}
+  local original_name=${tinfo[1]%/}
+  local trash_name=${tinfo[2]%/}
 } # }}}
 
 cleanup () { # Clean up the trash box {{{
@@ -254,10 +264,10 @@ cleanup () { # Clean up the trash box {{{
   # Clean up trash box
   touch "$_s_file"
   while :;do
-    trash_box_size=$(du -ms "${mytbox}" |awk '{print $1}')
+    local trash_box_size=$(du -ms "${mytbox}" |awk '{print $1}')
     if [ "${trash_box_size}" -gt "${maxboxsize}" ];then
-      delete_dir=$(ls -tr "${tbox}" | head -1)
-      rm -rf "${mytbox}/${delete_dir}"
+      delete_dir=$(find "${tbox}" -depth 1| head -1)
+      rm -rf "${mytbox:?}/${delete_dir}"
       cp "$_s_file" "${_s_file}.bak"
       grep -v "${delete_dir}" "${_s_file}.bak" > "$_s_file"
       rm -f "${_s_file}.bak"
@@ -267,22 +277,16 @@ cleanup () { # Clean up the trash box {{{
   done
 
   # Clean up trash list
-  cp "$_s_file" "${_s_file}.bak"
-  while read line;do
-    local orig_ifs=$IFS
-    IFS=","
-    local -a tinfo
-    tinfo=(${line})
-    IFS=$orig_ifs
-    trash_name_short=${tinfo[2]}
-    trash_name=$(eval echo "$trash_name_short") # Expand ~
-    if [[ ! -e "$trash_name" ]];then
+  cp "${_s_file}" "${_s_file}.bak"
+  while read -r line;do
+    parse_trash_info "$line"
+    if eval [[ ! -e "$trash_name" ]];then
       cp "${_s_file}.bak" "${_s_file}.bak2"
-      grep -v "$trash_name}" "${_s_file}.bak2" > "${_s_file}.bak"
-      rm -f "${_s_file}.bak2"
+      grep -v ",${trash_name}$" "${_s_file}.bak2" > "${_s_file}.bak"
     fi
   done < "$_s_file"
-  rm -f "${_s_file}.bak"
+  cp "${_s_file}.bak" "${_s_file}"
+  rm -f "${_s_file}.bak" "${_s_file}.bak2"
   return 0
 } # }}}
 
@@ -295,40 +299,31 @@ listup () { # List up deleted files/directories {{{
   fi
   local nwidth=${#ntrash}
   local i=$((ntrash-1))
-  sed -e '1!G;h;$!d' "$_s_file"|while read line;do
-    local orig_ifs=$IFS
-    IFS=","
-    local -a tinfo
-    tinfo=($line)
-    IFS=$orig_ifs
-    local day=${tinfo[0]}
-    local trash=${tinfo[1]}
-    local dest=${tinfo[2]}
-    trash=$(echo $trash|sed "s|^$HOME|\~|")
-    dest=$(echo $dest|sed "s|^$HOME|\~|")
+  sed -e '1!G;h;$!d' "$_s_file"|while read -r line;do
+    parse_trash_info "$line"
     if [ "$verbose" -ge 2 ];then
-      printf "%${nwidth}d %s %s %s\n" $i "${day}" "${trash}" "${dest}"
+      printf "%${nwidth}d %s %s %s\\n" $i "${date}" "${original_name}" "${trash_name}"
     elif [ "$verbose" -eq 1 ];then
-      printf "%${nwidth}d %s %s \n" $i "${day}" "${trash}"
+      printf "%${nwidth}d %s %s \\n" $i "${date}" "${original_name}"
     else
-      printf "%${nwidth}d %s\n" $i "${trash}"
+      printf "%${nwidth}d %s\\n" $i "${original_name}"
     fi
     ((i--))
   done
 } # }}}
 
 _sf_set_header () { # {{{
-  _s_header="\e[43;30m$_s_n values in total\e[0m "
+  _s_header="\\e[43;30m$_s_n values in total\\e[0m "
   if [[ "$_s_noheader" = 1 || "$_s_lines" -lt 10 ]];then
     return
   fi
-  if [ "$_s_cols" -ge 62 ];then
+  if [[ "$_s_cols" -ge 62 ]];then
     _s_header="$_s_header
  vim like move (j/k/gg/G etc...)
  d(delete), s(show details), q(quit)
  Enter: Select to bring back to the original place, and quit
  h: Select to copy it here (current directory), and quit"
-  elif [ "$_s_cols" -ge 40 ];then
+  elif [[ "$_s_cols" -ge 40 ]];then
     _s_header="$_s_header
  vim like move (j/k/gg/G etc...)
  d(delete), s(show details), q(quit)
@@ -341,21 +336,12 @@ _sf_show () { # _sf_show [is_last [n_show]] {{{
   local is_last=1
   local n_show=${2:-$_s_cols}
 
-  local orig_ifs=$IFS
-  IFS=","
-  local -a tinfo
-  tinfo=($_s_show)
-  IFS=$orig_ifs
-  local date=${tinfo[0]/-/ }
-  local trash=${tinfo[1]}
-  local dest=${tinfo[2]}
-
-  _s_show="$trash"
+  _s_show="$original_name"
   if [[ $verbose -ge 1 ]];then
-    _s_show="$date $trash"
+    _s_show="$date $original_name"
   fi
   if [[ $verbose -ge 2 ]];then
-    _s_show="$_s_show $dest"
+    _s_show="$_s_show $trash_name"
   fi
 
   if [[ "${#_s_show}" -gt "$n_show" ]];then
@@ -384,7 +370,7 @@ _sf_show () { # _sf_show [is_last [n_show]] {{{
       words=(${_s_search_words})
       local w
       for w in "${words[@]}";do
-        _s_show=$(echo "$_s_show"|perl -pe "s|($w)|\e[31${negative}m\1\e[0${negative}m|g$ic")
+        _s_show=$(echo "$_s_show"|perl -pe "s|($w)|\\e[31${negative}m\\1\\e[0${negative}m|g$ic")
       done
     else
       if [[ "$_s_search_opt" -eq 2 ]];then
@@ -393,57 +379,40 @@ _sf_show () { # _sf_show [is_last [n_show]] {{{
         local ic=""
       fi
       w="${_s_search_words}"
-      _s_show=$(echo "$_s_show"|perl -pe "s|($w)|\e[31${negative}m\1\e[0${negative}m|g$ic")
+      _s_show=$(echo "$_s_show"|perl -pe "s|($w)|\\e[31${negative}m\\1\\e[0${negative}m|g$ic")
     fi
   fi
 } # }}}
 
 _sf_d () { # {{{
-  local n=$_s_current_n
-  local orig_ifs=$IFS
-  IFS=","
-  local -a tinfo
-  tinfo=(${_s_inputs[$n]})
-  IFS=$orig_ifs
-  local origin_name_short=${tinfo[1]}
-  local trash_name_short=${tinfo[2]}
-  local origin_name=$(eval echo "$origin_name_short") # Expand ~
-  local trash_name=$(eval echo "$trash_name_short") # Expand ~
-  if [[ -z "$origin_name" || -z "$trash_name" ]];then
+  parse_trash_info "${_s_inputs[$_s_current_n]}"
+  if [[ -z "$original_name" || -z "$trash_name" ]];then
     _sf_echo "$_SENTAKU_INPUT_FILE might be corrupted
 Check $(_sf_nth $(($1+1))) trash information in $_SENTAKU_INPUT_FILE"
     _sf_quit 1
     return 1
-  elif [[ ! -e "$trash_name" ]];then
-    _sf_echo "$origin_name_short ($trash_name_short) does not exist in $tbox, remove from the list"
+  elif eval [[ ! -e "$trash_name" ]];then
+    _sf_echo "$original_name ($trash_name) does not exist in $tbox, remove from the list"
   fi
-  rm -rf "$trash_name"
+  eval rm -rf "$trash_name"
   _sf_rm_del
 } # }}}
 
 _sf_s () { # {{{
-  local orig_ifs=$IFS
-  IFS=","
-  local -a tinfo
-  tinfo=(${_s_inputs[$_s_current_n]})
-  IFS=$orig_ifs
-  local date=${tinfo[0]/-/ }
-  local origin_name_short=${tinfo[1]}
-  local trash_name_short=${tinfo[2]}
-  local trash_name=$(eval echo "$trash_name_short")
-  local filetest=$(file --mime "$trash_name")
+  parse_trash_info "${_s_inputs[$_s_current_n]}"
+  local filetest=$(eval file --mime "$trash_name")
   case "$filetest" in
     *"No such file or directory"*)_sf_d;return;;
-    *text*)local content="$(cat "$trash_name")";;
-    *directory*)local content="$trash_name_short is a directory, contents:
+    *text*)local content="$(eval cat "$trash_name")";;
+    *directory*)local content="$trash_name is a directory, contents:
 $(ls "$trash_name")";;
-    *binary*)local content="$trash_name_short is a binary file";;
-    *)local content="$trash_name_short is something else";;
+    *binary*)local content="$trash_name is a binary file";;
+    *)local content="$trash_name is something else";;
   esac
   _sf_clear
   echo "$(_sf_nth "$_s_current_n") trash: $date
-  Original file    : $origin_name_short
-  File in trash box: $trash_name_short
+  Original file    : $original_name
+  File in trash box: $trash_name
 ====================
 $content" | ${PAGER:-less}
   _sf_wait
@@ -489,35 +458,27 @@ _sf_search_check () { # {{{
 } # }}}
 
 _sf_execute () { # {{{
-  local orig_ifs=$IFS
-  IFS=","
-  local -a tinfo
-  tinfo=(${_s_inputs[$_s_current_n]})
-  IFS=$orig_ifs
-  local origin_name_short=${tinfo[1]%/} # remove trailing /
-  local trash_name_short=${tinfo[2]%/}
-  local origin_name=$(eval echo "$origin_name_short") # Expand ~
-  local trash_name=$(eval echo "$trash_name_short")
-  local target="$origin_name"
+  parse_trash_info "${_s_inputs[$_s_current_n]}"
+  local target="$original_name"
 
   # Check trash information
-  if [[ -z "$origin_name"  || -z "$trash_name" ]];then
+  if [[ -z "$original_name"  || -z "$trash_name" ]];then
     echo "$_SENTAKU_INPUT_FILE might be corrupted" >/dev/tty
     echo "$(nth $(($1+1))) trash information was corrupted" >/dev/tty
     echo "removing..." >/dev/tty
     _sf_delete
     return 1
-  elif [[ ! -e "$trash_name" ]];then
-    echo "$trash_name_short doesn't exist, remove from the list" >/dev/tty
+  elif eval [[ ! -e "$trash_name" ]];then
+    echo "$trash_name doesn't exist, remove from the list" >/dev/tty
     _sf_delete
     return 1
   fi
 
   if [[ $here -eq 1 ]];then
-    target="${origin_name##*/}"
+    target="${original_name##*/}"
   fi
   # For back, confirm anyways.
-  if [[ -e "$target" ]];then
+  if eval [[ -e "$target" ]];then
     _sf_yn "$target exists. Do you want to overwrite from trash box?"
     local ret=$?
     if [[ $ret -ne 0 ]];then
@@ -525,11 +486,11 @@ _sf_execute () { # {{{
     fi
   fi
   if [[ $here -eq 1 ]];then
-    echo "Copying ${target} from ${trash_name_short} here"
-    cp -r "$trash_name" "$target"
+    echo "Copying ${target} from ${trash_name} here"
+    eval cp -r "$trash_name" "$target"
   else
-    echo "Bringing ${target} back from ${trash_name_short}"
-    mv "$trash_name" "$target"
+    echo "Bringing ${target} back from ${trash_name}"
+    eval mv "$trash_name" "$target"
     _sf_delete
   fi
 } # }}}
