@@ -6,8 +6,8 @@
 #
 # Usage: trash [-rficClbVv] [-v <verbose level>] [-t <trash_box>] <file/directory>
 #
-TRASH_VERSION=v0.2.4
-TRASH_DATE="21/Sep/2018"
+TRASH_VERSION=v0.2.5
+TRASH_DATE="19/Dec/2018"
 #
 # }}}
 
@@ -292,7 +292,7 @@ cleanup () { # Clean up the trash box {{{
 
 listup () { # List up deleted files/directories {{{
   touch "$_s_file"
-  local ntrash=$(echo $(wc -l < "$_s_file"))
+  local ntrash=$(echo $(grep -c ^ < "$_s_file"))
   if [[ "$ntrash" -eq 0 ]];then
     echo There is no trash
     return 0
