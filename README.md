@@ -58,12 +58,15 @@ if you download directly.
 ## Usage
 
     # Help
-    Usage: trash [-rficClbVv] [-v <verbose level>] [-t <trash_box>] <file/directory>
+    Usage: trash [-rficClbV] [-v <verbose level>] [-t <trash_box>] <file/directory>
     
     Arguments:
-       -r              Remove directory (default: $rdir)
-       -f              Remove w/o confirmation (default: $force)
-       -i              Remove w/ confirmation (default: $confirm)
+       -r              Remove directory (default: 0)
+       -f              Do not ask when file/directory is removed directly
+                       Do not return error even if file/directory does not exist
+                       -f ignores previous -i option
+       -i              Remove w/ confirmation
+                       -i ignores previous -f option
        -t <trash_box>  Use given trash box instead of $tbox
        -c              Clean up trash box (make it less than MAXTRASHBOXSIZE)
        -C              Clean up trash box (make it empty)
@@ -111,7 +114,7 @@ if you download directly.
 
 Following alias is useful to use trash:
 
-    alias del="trash -r"
+    alias del="trash -i -r" # Do not confirm, remove directory, too
 
 ### Clean up
 
